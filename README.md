@@ -1,6 +1,6 @@
 # Local Media Gallery
 
-A portable, offline-first photo and video gallery. **Your media stays in normal folders**; favorites, tags, albums, file index and thumbnail manifest remain readable text files. No cloud, no media database, no accounts and no build step. Leightweight aternative to shotwell, digikam and other photo / video viewers.
+A portable, offline-first photo and video gallery. **Your media stays in normal folders**; favorites, tags, albums, file index and thumbnail manifest remain readable text files. No cloud, no media database, no accounts and no build step. Lightweight aternative to shotwell, digikam and other photo / video viewers. Insert in your root folder of your photo structure & enjoy
 
 > Version 6.1. The gallery is a standalone `__gallery/index.html`: **no Python, local server, scripts, or additional installation required**.
 
