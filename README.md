@@ -1,8 +1,8 @@
 # Local Media Gallery
 
-A portable, offline-first photo and video gallery. **Your media stays in normal folders**; favorites, tags, albums, file index and thumbnail manifest remain readable text files. No cloud, no media database, no accounts and no build step. Lightweight aternative to shotwell, digikam and other photo / video viewers. Insert in your root folder of your photo structure & enjoy
+A portable, offline-first photo and video gallery. **Your media stays in normal folders**; favorites, tags, albums, file index and thumbnail manifest remain readable text files. No cloud, no media database, no accounts and no build step.
 
-> Version 6.1. The gallery is a standalone `__gallery/index.html`: **no Python, local server, scripts, or additional installation required**.
+> Version 6.2. The gallery is a standalone `__gallery/index.html`: **no Python, local server, scripts, or additional installation required**.
 
 ## Features
 
@@ -12,7 +12,7 @@ A portable, offline-first photo and video gallery. **Your media stays in normal 
 - Thumbnail cache in `__gallery/thumbs/` with a human-readable `thumbs.tsv` manifest.
 - `files.txt` index retained between sessions. **Refresh index** only after adding/removing/renaming files.
 - Suggested migration of favorites/tags/albums on detected file moves/renames; backups before migrations or cleanup.
-- Recent library handles remembered in browser storage when supported; browser may ask to reauthorize access.
+- Recent library handles remembered **separately for each `index.html` file location**; browser may ask to reauthorize access. A warning appears if you pick a folder whose name differs from the HTML file’s parent library.
 - Tooltips on **Refresh index** and **Clean up metadata & thumbnails** instead of persistent help paragraphs.
 
 ## Install / quick start
@@ -45,13 +45,24 @@ MyMedia/
 
 `favorites.txt` and album `.txt` files contain relative paths, one per line. `tags.tsv` contains a relative path, one **tab**, then comma-separated tags. Paths are relative to the media library root.
 
-## Updating to v6.1
+## Updating to v6.2
 
-**Do not delete `__gallery/` if it contains your own tags/favorites/albums.** Back it up before updating. Replace only `__gallery/index.html`. No helper files are needed. If upgrading from v6, you can remove the old `external_helper.py`, `start-windows.cmd`, `start-linux.sh`, and `start-macos.command`; they are no longer used. Existing `files.txt`, `favorites.txt`, `tags.tsv`, `media-info.tsv`, `thumbs.tsv`, albums, backups and thumbnails remain compatible; there is **no need to rescan** simply for this upgrade.
+**Do not delete `__gallery/` if it contains your own tags/favorites/albums.** Back it up before updating. Replace only `__gallery/index.html`. No helper files are needed. **After this update, choose each gallery’s folder once again** because browser shortcuts are now isolated by the HTML file’s location. Existing metadata and indexes are unchanged. If upgrading from v6, you can remove the old `external_helper.py`, `start-windows.cmd`, `start-linux.sh`, and `start-macos.command`; they are no longer used. Existing `files.txt`, `favorites.txt`, `tags.tsv`, `media-info.tsv`, `thumbs.tsv`, albums, backups and thumbnails remain compatible; there is **no need to rescan** simply for this upgrade.
 
 A complete fresh-install archive is also provided. **Do not overwrite your existing metadata or thumbnails with empty files.** Removing `__gallery/` deletes your personal favorites, tags, albums and the cache.
 
 **If you previously configured an external editor in v6:** `external-app.json` is unused in v6.1; you can delete it if desired. This does not affect your media metadata.
+
+## Independent galleries (important fix in v6.2)
+
+Each copy of `__gallery/index.html` keeps its **own** recently opened libraries in Chrome or Edge, identified by the full location of that HTML file. For example:
+
+- `Pictures/__gallery/index.html` remembers `Pictures`.
+- `Pictures-special/__gallery/index.html` remembers `Pictures-special`.
+
+v6.1 and earlier used a shared browser database name, so their remembered libraries could appear in both copies. **v6.2 does not import old shared shortcuts**; choose the correct root folder once in each copy. You do not need to delete any metadata or regenerate thumbnails. When the HTML is moved to a different path, its recent-library history resets (the library files do not).
+
+The browser cannot prove which physical folder contains the currently opened HTML file, so the app also warns if the name you pick doesn't match its inferred parent folder. You must still select the correct root: the selected folder controls what can be read and written. The **Forget libraries** button now affects only that HTML file's remembered shortcuts. It never deletes media.
 
 ## Browser support and limitations
 
