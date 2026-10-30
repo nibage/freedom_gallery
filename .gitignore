@@ -1,0 +1,17 @@
+# If this repository is inside a photo library, never commit personal media/metadata.
+# Only source files, documentation and placeholder directories are allowed.
+*
+!.gitignore
+!README.md
+!__gallery/
+__gallery/*
+!__gallery/index.html
+!__gallery/albums/
+__gallery/albums/*
+!__gallery/albums/.gitkeep
+!__gallery/thumbs/
+__gallery/thumbs/*
+!__gallery/thumbs/.gitkeep
+!__gallery/backups/
+__gallery/backups/*
+!__gallery/backups/.gitkeep
