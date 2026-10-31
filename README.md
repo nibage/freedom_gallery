@@ -1,6 +1,6 @@
 # Local Media Gallery
 
-A lightweight **offline photo and video gallery** that runs from a single `index.html`. No server, cloud account, package manager, or media database is required. Albums, favorites, tags, and the file index remain in readable text files beside the app.
+A lightweight **offline photo and video gallery** that runs from a single `index.html`. No server, cloud account, package manager, or media database is required. Albums, favorites, tags, and the file index remain in readable text files beside the app. Could function as independent a replacement for Shotwell, Digikam or any other destkop image viewer.
 
 > **Browser support:** Use a recent Chrome or Edge (Chromium-based browser) with the File System Access API. Firefox does not currently offer the folder-writing functionality this app needs.
 
