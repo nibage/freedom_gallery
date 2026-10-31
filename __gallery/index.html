@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v6.9.1</title>
+<title>Local Media Gallery v6.9.2</title>
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
   [hidden] {display:none!important}
@@ -41,15 +41,16 @@
   .maintenance button{font-size:12px;width:100%;text-align:left;white-space:normal;line-height:1.4}
   .maintenance button+button{margin-top:8px}
 .aside-footer {font-size:12px;color:var(--muted);margin:25px 11px;line-height:1.6}
-  main {padding:23px;min-width:0}.filters {display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  main {padding:23px;min-width:0}.filters {display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:6px}
   input,select {border:1px solid #3a4658;background:#1b2430;color:var(--text);border-radius:8px;padding:11px 12px;outline:0}
   input:focus,select:focus {border-color:#8daee4} #query {flex:1;min-width:210px} #folder {width:min(275px,100%)}
   /* Reserve a permanent button slot, including outside Trash, to prevent header reflow. */
-  .results-toolbar {display:grid;grid-template-columns:minmax(0,1fr) 155px;align-items:start;gap:12px;margin:9px 0 19px;min-width:0}
-  #results {font-size:13px;color:var(--muted);min-height:34px;min-width:0;line-height:34px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  #deleteAllTrash {font-size:12px;padding:8px 9px;width:100%;min-width:0;max-width:155px;justify-self:end;overflow:hidden;text-overflow:ellipsis}
+  /* A compact results row, with a reserved action slot to avoid text jumps in Trash. */
+  .results-toolbar {display:grid;grid-template-columns:minmax(0,1fr) 108px;align-items:center;gap:8px;margin:0 0 7px;min-width:0;min-height:28px}
+  #results {font-size:13px;color:var(--muted);min-width:0;line-height:24px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #deleteAllTrash {font-size:11px;padding:4px 7px;line-height:18px;width:108px;min-width:0;max-width:108px;justify-self:end;overflow:hidden;text-overflow:ellipsis}
   .results-toolbar #deleteAllTrash[hidden] {visibility:hidden!important;display:block!important;pointer-events:none}
-  @media(max-width:620px){.results-toolbar {grid-template-columns:minmax(0,1fr) 116px;gap:5px} #deleteAllTrash{font-size:11px;padding:8px 5px}}
+  @media(max-width:620px){.results-toolbar {grid-template-columns:minmax(0,1fr) 96px;gap:5px} #deleteAllTrash{width:96px;max-width:96px;font-size:10px;padding:4px 4px}}
   .grid {display:grid;grid-template-columns:repeat(auto-fill,minmax(175px,1fr));gap:15px}
   .photo {border:1px solid var(--line);border-radius:11px;overflow:hidden;background:#1a222e;position:relative;min-width:0}
   .thumb {display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#232d3a;cursor:pointer;color:var(--muted)}
@@ -209,7 +210,7 @@
 <div id="toast" role="status"></div>
 <script>
 'use strict';
-// Media gallery v6.9.1: clean data folder; no legacy data migration or copying.
+// Media gallery v6.9.2: compact result spacing; no legacy data migration or copying.
 const el = id => document.getElementById(id);
 const IMAGE_EXT = /\.(jpe?g|png|webp|gif|avif|bmp)$/i;
 const VIDEO_EXT = /\.(mp4|m4v|webm|ogv|mov|mkv|avi)$/i;
