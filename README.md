@@ -1,92 +1,86 @@
 # Local Media Gallery
 
-A portable, offline-first photo and video gallery. **Your media stays in normal folders**; favorites, tags, albums, file index and thumbnail manifest remain readable text files. No cloud, no media database, no accounts and no build step.
+A lightweight **offline photo and video gallery** that runs from a single `index.html`. No server, cloud account, package manager, or media database is required. Albums, favorites, tags, and the file index remain in readable text files beside the app.
 
-> Version 6.2. The gallery is a standalone `__gallery/index.html`: **no Python, local server, scripts, or additional installation required**.
+> **Browser support:** Use a recent Chrome or Edge (Chromium-based browser) with the File System Access API. Firefox does not currently offer the folder-writing functionality this app needs.
+
+## Quick start
+
+1. Place `__gallery/` inside the root of your photo/video collection.
+2. Open `__gallery/index.html` in Chrome or Edge.
+3. Click **Open library** and choose the **media collection root** (the folder *containing* `__gallery`, not `__gallery` itself).
+4. Allow folder access when the browser requests it. The first scan builds `__gallery/data/files.txt`; later visits can reuse the saved index.
+
+The app works locally. Your original photos and videos aren't uploaded anywhere.
 
 ## Features
 
-- Recursive photo and video discovery, folder filter (including parent folders with media only in descendants), search by path/name/tag.
-- Favorites (`favorites.txt`), editable tags (`tags.tsv`), albums (one `.txt` file per album).
-- Video playback and preview frames in supported browsers.
-- Thumbnail cache in `__gallery/thumbs/` with a human-readable `thumbs.tsv` manifest.
-- `files.txt` index retained between sessions. **Refresh index** only after adding/removing/renaming files.
-- Suggested migration of favorites/tags/albums on detected file moves/renames; backups before migrations or cleanup.
-- Recent library handles remembered **separately for each `index.html` file location**; browser may ask to reauthorize access. A warning appears if you pick a folder whose name differs from the HTML file’s parent library.
-- Tooltips on **Refresh index** and **Clean up metadata & thumbnails** instead of persistent help paragraphs.
+- Recursive gallery for pictures and videos, including parent folders that contain media only in subfolders.
+- Filename, path, and tag search; folder and media-type filters.
+- **Classic** cards or **Instagram** edge-to-edge square thumbnails with a remembered layout preference.
+- High-quality WebP thumbnail cache, stored on disk and regenerated on demand.
+- Favorites, editable tags, and text-file albums; album/tag selection starts across **all folders**, while normal search can combine with a selected folder.
+- Full-screen viewer with keyboard shortcuts and click-outside-to-close.
+- **Show all in folder** and **Copy full path** (the latter requires entering the library's absolute path once; browsers cannot provide it automatically).
+- An **in-gallery Trash** to temporarily hide media, with Restore and separately confirmed **permanent deletion**.
+- Optional move/rename matching when refreshing the index; metadata transfers require your approval.
 
-## Install / quick start
-
-1. Put the entire `__gallery/` directory inside your existing media library.
-2. Open `__gallery/index.html` in current **Chrome or Microsoft Edge**.
-3. Click **Open library** and select the **parent media directory**, not `__gallery/`.
-4. Grant access when asked. The gallery scans your photos/videos and creates the text metadata and thumbnail cache inside `__gallery/` as needed.
-
-Example layout:
+## Project layout
 
 ```text
-MyMedia/
+Pictures/
 ├── 2024/
-│   ├── Holiday/photo.jpg
-│   └── Holiday/clip.mp4
+│   └── example.jpg
 ├── 2025/
-│   └── Family/photo.png
+│   └── video.mp4
 └── __gallery/
     ├── index.html
-    ├── files.txt                  # generated
-    ├── favorites.txt              # generated
-    ├── tags.tsv                   # generated
-    ├── media-info.tsv             # generated
-    ├── thumbs.tsv                 # generated
-    ├── albums/                    # generated TXT files
-    ├── thumbs/                    # generated WebP thumbnails
-    └── backups/                   # generated safety backups
+    └── data/
+        ├── files.txt           # indexed relative media paths
+        ├── favorites.txt       # one relative media path per line
+        ├── tags.tsv            # path<TAB>comma-separated tags
+        ├── trash.txt           # items hidden from normal gallery views
+        ├── media-info.tsv      # signatures for possible moves/renames
+        ├── thumbs.tsv          # WebP thumbnail manifest
+        ├── path-config.json    # optional manually configured absolute path
+        ├── albums/             # each album is its own .txt file
+        └── thumbs/             # generated WebP preview images
 ```
 
-`favorites.txt` and album `.txt` files contain relative paths, one per line. `tags.tsv` contains a relative path, one **tab**, then comma-separated tags. Paths are relative to the media library root.
+`index.html` is the only app source file. `data/` is created/filled as needed. Media paths inside the text files are relative to the selected collection root, making the metadata portable with the library.
 
-## Updating to v6.2
+### Starting clean or updating
 
-**Do not delete `__gallery/` if it contains your own tags/favorites/albums.** Back it up before updating. Replace only `__gallery/index.html`. No helper files are needed. **After this update, choose each gallery’s folder once again** because browser shortcuts are now isolated by the HTML file’s location. Existing metadata and indexes are unchanged. If upgrading from v6, you can remove the old `external_helper.py`, `start-windows.cmd`, `start-linux.sh`, and `start-macos.command`; they are no longer used. Existing `files.txt`, `favorites.txt`, `tags.tsv`, `media-info.tsv`, `thumbs.tsv`, albums, backups and thumbnails remain compatible; there is **no need to rescan** simply for this upgrade.
+**New installation:** Extract the complete release so that your collection has `__gallery/index.html`. Open it and select the collection root; indexing will happen once.
 
-A complete fresh-install archive is also provided. **Do not overwrite your existing metadata or thumbnails with empty files.** Removing `__gallery/` deletes your personal favorites, tags, albums and the cache.
+**Update from v6.9.1:** Replace **only `__gallery/index.html`**. Keep `__gallery/data/` untouched; the existing index, favorites, albums, tags, and thumbnail cache remain valid. No rescan or thumbnail rebuild is needed for this UI-only update.
 
-**If you previously configured an external editor in v6:** `external-app.json` is unused in v6.1; you can delete it if desired. This does not affect your media metadata.
+**If you delete `__gallery/`:** You will also delete favorites, tags, albums, the Trash list, and thumbnails. Preserve any files you want to keep (for example `data/favorites.txt`) before deleting it, and restore them to the same paths before reindexing. This release does **not** migrate data from old folder layouts.
 
-## Independent galleries (important fix in v6.2)
+## Version 6.9.2
 
-Each copy of `__gallery/index.html` keeps its **own** recently opened libraries in Chrome or Edge, identified by the full location of that HTML file. For example:
+- Reduced the vertical whitespace between the search/filter controls, results count, and photo grid in both Classic and Instagram modes.
+- Made the **Delete all** button narrower and shorter.
+- Kept a reserved action slot, so showing the button in Trash doesn't move the results count.
+- No changes to indexing, thumbnails, deletion behavior, or metadata formats.
 
-- `Pictures/__gallery/index.html` remembers `Pictures`.
-- `Pictures-special/__gallery/index.html` remembers `Pictures-special`.
+## Trash and permanent deletion
 
-v6.1 and earlier used a shared browser database name, so their remembered libraries could appear in both copies. **v6.2 does not import old shared shortcuts**; choose the correct root folder once in each copy. You do not need to delete any metadata or regenerate thumbnails. When the HTML is moved to a different path, its recent-library history resets (the library files do not).
+**Move to Trash** adds a path to `data/trash.txt` and hides the media from normal gallery views. It **does not** move or delete the original file.
 
-The browser cannot prove which physical folder contains the currently opened HTML file, so the app also warns if the name you pick doesn't match its inferred parent folder. You must still select the correct root: the selected folder controls what can be read and written. The **Forget libraries** button now affects only that HTML file's remembered shortcuts. It never deletes media.
+**Delete permanently** and **Delete all** remove the actual media file(s) from disk after confirmation. The confirmation can be dismissed with **Cancel**, **×**, **Esc**, or by clicking outside. These actions **bypass the operating system Recycle Bin/Trash and cannot be undone** by this app. No automatic media or metadata backups are made. Please test deletion on disposable files first.
 
-## Browser support and limitations
-
-- **Chrome / Edge:** recommended; relies on `showDirectoryPicker()` / File System Access API for reading and writing in the chosen library.
-- **Firefox:** does not implement the directory picker needed by this design. The gallery requires a Chromium-based browser for direct local folder access.
-- Videos with unsupported codecs get a placeholder thumbnail or fail playback; this does not modify the originals. MP4/H.264 and WebM generally work best.
-- The index is a list of file paths and needs a manual refresh after external filesystem changes.
-- Thumbnail generation is lazy and persists WebP previews as you browse.
-- Recognition of moved/renamed media is based on recorded metadata and sampled signatures; verify suggested matches before transfer.
-- The app is intended for personal/trusted local libraries; test and back up your metadata before using it on a large photo archive.
-
-## Publishing on GitHub
-
-The project has no build step. Put the contents of this ZIP into a GitHub repository and commit `README.md`, `.gitignore` and `__gallery/index.html` (plus `.gitkeep` placeholders). User-generated media indexes, favorites, tags, thumbnails are ignored by `.gitignore`; do not accidentally commit personal photos or metadata. For a source repository, keep sample screenshots (if any) anonymized and outside personal libraries. Choose and add an appropriate license before you publish.
+**Delete all** operates on all indexed items in the gallery's Trash, not only the items currently visible after search or folder filtering.
 
 ## Keyboard shortcuts
 
-| Key | Action |
-| --- | --- |
-| `/` | Focus search |
-| `←` / `→` | Previous / next media (when video controls aren't focused) |
-| `F` | Toggle favorite in viewer |
-| `Esc` | Close viewer |
+- `←` / `→`: previous / next media item (when not controlling a video)
+- `F`: toggle favorite in viewer
+- `Esc`: close the viewer or dialog
+- `/`: focus search
 
-## No lock-in
+## GitHub / privacy
 
-A future gallery can read and edit `favorites.txt`, album `.txt` files and `tags.tsv` without using this UI. `files.txt`, `thumbs.tsv` and `media-info.tsv` are derived indexes and can be recreated. Your original photo/video folder structure never changes.
+Publish `README.md`, `.gitignore`, and `__gallery/index.html` (optional `.gitkeep` placeholders keep empty `data/albums/` and `data/thumbs/` in the repository). **Do not publish your personal media or generated `__gallery/data/` contents.** The bundled `.gitignore` excludes these data files.
+
+This project is intended to run entirely on your own device. No external services are required.
