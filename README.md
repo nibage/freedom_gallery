@@ -83,11 +83,11 @@ All main controls and viewer actions include mouse-hover `title` tooltips.
 
 In **Classic mode**, click the filename bar to select a file (Shift+click for a range); clicking the picture itself always opens it. In **Instagram mode**, Ctrl/Cmd-click, Shift-click, long press, or dragging select files.
 
-The results count sits next to the **freedom_gallery** title in the top bar, freeing space above the photos. When items are selected it also shows `| N selected`. Hover over Favorites, Trash, or an album in the sidebar to reveal **+** for adding the selection. A successful operation displays **✓**. If **every selected item already belongs to that category**, its hover action becomes **−** to remove membership (or restore from Trash), even when another category is currently viewed. Hover over a tag to see a green **+** to assign it, or **−** if all selected files already have that tag; clicking adds/removes the tag **only for the selected files**. These actions work in Classic **and** Instagram mode. The selection is temporary, clears with **Esc** or by clicking outside, and never physically deletes originals.
+The results count sits next to the **freedom_gallery** title in the top bar, freeing space above the photos. When items are selected it also shows `| N selected`. Hover over Favorites, Trash, or an album in the sidebar to reveal **+** for adding the selection. A successful operation displays **✓**. If **every selected item already belongs to that category**, its hover action becomes **−** to remove membership (or restore from Trash), even when another category is currently viewed. Hover over a tag to see a green **+** to assign it, or **−** if all selected files already have that tag; clicking adds/removes the tag **only for the selected files**. These actions work in Classic **and** Instagram mode. **Right-click any image (or empty gallery area) while items are selected** to keep the + / − controls visible on every Favorites, Trash, album, or tag item in the current sidebar tab. Switch between Albums and Tags without losing these actions. The selection is temporary, clears with **Esc** or by clicking outside, and never physically deletes originals.
 
 ### Albums and tags
 
-Inside the full-screen viewer, buttons appear vertically as **Favorites** and **Trash**, followed by a compact **Albums / Tags** switch with **+ New**, **− Remove**, search, and clickable memberships. Changes are saved on click; no separate Save tags button is needed. The bottom-aligned **Show folder** and **Copy path** buttons stay fixed; the album/tag list expands to use all available space between search and those controls, scrolling as needed. The photo viewer dimensions remain fixed across different media sizes and collection counts, and images are top-aligned to minimize the dark band above wide photos without cropping.
+Inside the full-screen viewer, buttons appear vertically as **Favorites** and **Trash**, followed by a compact **Albums / Tags** switch with **+ New**, **− Remove**, search, and clickable memberships. Changes are saved on click; no separate Save tags button is needed. The bottom-aligned **Show folder** and **Copy path** buttons stay fixed; the album/tag list expands to use all available space between search and those controls, scrolling as needed. The photo viewer dimensions remain fixed across different media sizes and collection counts. The viewer is now shorter on desktop, reducing unused dark space below landscape photos without cropping; images remain top-aligned and albums/tags scroll internally.
 
 
 **Trash counts:** moving a photo into the gallery Trash does not remove its album memberships or tag assignments. Album and tag counters exclude trashed items, so they decrease while the file is hidden and return to their previous values when restored. Permanent deletion, in contrast, removes that file's saved associations.
@@ -115,7 +115,8 @@ The file index and album/tag paths are **relative to the selected library root**
 ## Keyboard shortcuts
 
 - `←` / `→` — previous / next item in viewer (except when video controls have focus)
-- `F` — toggle favorite for the currently open item
+- `F` — add all selected images/videos to Favorites, or toggle Favorite for the currently open viewer item
+- `Ctrl+Z` / `Cmd+Z` — undo the last reversible metadata edit (favorites, tags, album changes, or in-gallery Trash moves/restores); no cross-restart history, no undo of permanent file deletion. Native text-field undo still works while editing input.
 - `Esc` — close viewer / confirmation, or clear multi-selection
 - `/` — focus media search
 - `Delete` — move the open image or selected images to the **in-gallery Trash** without confirmation. **It never permanently deletes**; when viewing Trash, use the explicit, confirmed Delete selected / Delete all buttons.
@@ -200,3 +201,15 @@ No index or cache migration is needed; replacing `__gallery/index.html` preserve
 - Hover actions show **−** when all selected files already have the label, including tags, albums and Favorites.
 - The results counter moved into the top banner next to the gallery title.
 - Narrow-screen sidebar toolbar overflow fixed; no metadata migration or cache regeneration is required.
+
+
+## v7.5 — Quick organization and one-step Undo
+
+- The photo viewer is consistently shorter on desktop (up to 690px) to reduce the unused dark strip beneath wide images. It still does not crop the source and stays the same size between photographs.
+- **Right-click while photos are selected:** the sidebar displays `+` or `−` controls for all displayed Favorites, Trash, album, or tag rows (including when you switch Albums/Tags); each reflects whether the entire selection already belongs to that category. Esc or clearing the selection removes this pinned state.
+- **`F` with photos selected:** add the selected photos/videos to Favorites without opening them. In the viewer, `F` still toggles only the open photo.
+- **`Ctrl+Z` (Windows/Linux) / `Cmd+Z` (macOS):** undo the **last reversible metadata edit**, including bulk actions, tag membership, album membership/creation/removal, favorites and in-gallery Trash moves/restores. Undo writes restored text metadata back to disk. The history is **one step per open page** and is reset when changing libraries or reloading; it does **not** recover permanently deleted files or undo index rebuilding/cleanup. Native undo in text inputs remains available.
+- The AND/OR button moves next to the smaller **Search albums / Search tags** field, leaving the collection tabs more compact.
+- On desktop, the current album/tag list expands all the way to the stationary **Rebuild index / Remove thumbs** buttons, scrolling internally when needed.
+
+**Upgrade:** Replace only `__gallery/index.html`. No server, database, metadata migration or thumbnail regeneration is needed.
