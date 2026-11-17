@@ -145,3 +145,11 @@ The color schemes reflect the Local StackEdit Wiki screenshots: a burgundy-red h
 ### Safety
 
 `Delete selected` is only available inside the in-gallery Trash. **Move to Trash** merely hides originals, but **Delete selected**, **Delete all**, and **Delete permanently** remove actual files from disk. Test permanent deletion with disposable media before using it on your archive.
+
+## v7.3.1 — Embedded favicon & steady sidebar controls
+
+- A vector photo-gallery favicon is embedded in `__gallery/index.html` as a `data:image/svg+xml` link. It works offline via `file://` without adding asset dependencies.
+- The sidebar contents now scroll independently of the maintenance row. **Rebuild index** and **Remove thumbs** stay anchored at the bottom and do not jump when switching Classic / Instagram, including when there are more than 12 photos.
+- The top-bar height is measured to keep sidebar alignment correct at different desktop widths and zoom settings; narrow/mobile layouts retain the side-by-side maintenance buttons.
+
+This is a UI-only change. Existing indexes, thumbnail caches, favorites, albums, and tags are untouched.
