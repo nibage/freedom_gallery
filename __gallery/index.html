@@ -476,7 +476,7 @@ html[data-theme="light"] .top .results-header{color:#f0e4e7}
 .folder-lock-icons{font-size:12px;letter-spacing:-4px;padding-right:4px;white-space:nowrap}
 .folder-lock-text{font-size:11px}
 .collection-operator{min-width:36px;min-height:30px;padding:4px 6px;background:var(--control);color:var(--text);border:1px solid var(--control-border);border-radius:6px;font-size:11px;font-weight:700;cursor:pointer}
-.collection-operator[data-mode="OR"],.collection-operator[data-mode="AND"]{border-color:var(--ok);color:var(--ok);background:color-mix(in srgb,var(--ok) 9%,var(--control))}
+.collection-operator[data-mode="OR"]{border-color:var(--accent);color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--control))}
 .collection-operator:hover{background:var(--control-hover)}
 .collection-header{gap:5px}
 #albumList .album-row .tag-count{margin-left:auto;margin-right:26px}
@@ -526,15 +526,19 @@ body.show-selection-actions.has-selection .row-plus,
 body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-events:auto}
 
 
-/* v7.6: three-state operator, compact icon-only lock, equal letterbox bands */
-.collection-operator[data-mode="OFF"]{background:var(--control);border-color:var(--control-border);color:var(--text)}
-.collection-operator[data-mode="OR"],.collection-operator[data-mode="AND"]{border-color:var(--ok)!important;color:var(--ok)!important;box-shadow:inset 0 0 0 1px var(--ok);background:var(--control)}
-.folder-lock{gap:5px;min-width:68px;padding:6px 8px}
-.folder-lock-icons{letter-spacing:normal;padding:0}
-.folder-only-icon{font-size:15px;letter-spacing:normal}
+/* v7.6: three-state collection filtering, compact folder lock and symmetric image bars */
+.collection-operator[data-mode="OR"],.collection-operator[data-mode="AND"]{
+ color:var(--ok)!important;border-color:var(--ok)!important;
+ background:color-mix(in srgb,var(--ok) 8%,var(--control))!important;
+}
+.collection-operator[data-mode="OFF"]{color:var(--text);border-color:var(--control-border);background:var(--control)}
+.folder-lock{gap:4px;padding:6px 8px}
+.folder-lock-icons{display:inline-flex;align-items:center;gap:4px;padding:0;letter-spacing:normal;white-space:nowrap;font-size:14px}
+#folderLockIcon{font-size:13px}
 .folder-lock-text{display:none!important}
-#viewer .stage{align-items:center!important;padding:0!important;display:flex;justify-content:center}
-#viewer .stage #bigImage,#viewer .stage #bigVideo{max-height:100%!important;max-width:100%;object-fit:contain}
+/* Center the uncropped original inside the fixed viewer: top and bottom bands match. */
+#viewer .stage{align-items:center!important;padding:8px 0!important}
+#viewer .stage #bigImage,#viewer .stage #bigVideo{max-height:calc(100% - 16px)!important}
 </style>
 </head>
 <body>
@@ -570,7 +574,7 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
     </div>
     <div class="collection-search-row">
       <input id="collectionQuery" type="search" placeholder="Search albums…" aria-label="Search albums or tags" disabled>
-      <button id="collectionOperator" class="collection-operator" type="button" aria-label="Album and tag combination: OFF" aria-pressed="false" title="OFF: choose one album or tag. OR: match any chosen album or tag. AND: match every chosen album and tag. Lock folder limits all modes to the selected folder.">OFF</button>
+      <button id="collectionOperator" class="collection-operator" type="button" aria-label="Collection filtering: OFF" title="Click to cycle OFF, OR, AND. OFF: one album or one tag. OR: any selected collection. AND: all selected collections.">OFF</button>
     </div>
     <div id="albumList" class="collection-scroll"></div>
     <div id="tagList" class="collection-scroll tag-chips" hidden></div>
@@ -585,9 +589,9 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
     <div class="filters">
       <input id="query" type="search" placeholder="Search filename, path or tag… (/)" aria-label="Search media">
       <select id="folder" aria-label="Filter by folder"><option value="">All folders</option></select>
-      <label class="folder-lock" id="folderLockLabel" title="Lock folder: restrict album/tag filters to the selected folder. Uncheck for global filtering.">
+      <label class="folder-lock" id="folderLockLabel" title="Lock folder: keep the selected folder while browsing albums and tags. In OR mode, folder is temporarily ignored but remembered.">
         <input id="folderLock" type="checkbox" checked aria-label="Lock selected folder" />
-        <span id="folderLockIcon" aria-hidden="true">🔒</span><span class="folder-only-icon" aria-hidden="true">📁</span>
+        <span class="folder-lock-icons" aria-hidden="true"><span id="folderLockIcon">🔒</span><span>📁</span></span>
       </label>
       <select id="kind" aria-label="Media type"><option value="">Photos & videos</option><option value="image">Photos only</option><option value="video">Videos only</option></select>
       <button class="btn layout-toggle" id="layoutToggle" type="button" aria-pressed="false" title="Switch between classic cards and a compact, edge-to-edge square media grid. Your choice is saved for this gallery.">▦ Instagram mode</button>
@@ -763,30 +767,22 @@ let fileInfo=new Map(), scanInProgress=false, fileInfoTimer=null, thumbResetting
 let configuredRootPath=''; // Human-readable user-entered location of the selected library, NOT exposed by the browser.
 // Selection is UI-only and never persisted; it is scoped to the visible Classic gallery.
 let selectedPaths=new Set(), selectingMode=false, selectionAnchor=null, marquee=null, suppressCardClick=false;
-let collectionMode='albums',selectedTagKeys=new Set(), longPress=null;
+let collectionMode='albums',selectedTagKeys=new Set(),selectedAlbumNames=new Set(), longPress=null;
 const FOLDER_LOCK_KEY='gallery-folder-lock:'+GALLERY_URL;
 const COLLECTION_OPERATOR_KEY='gallery-filter-operator:'+GALLERY_URL;
-let folderLocked=true,collectionOperator='OFF',selectedAlbumNames=new Set();
-try{
-  folderLocked=localStorage.getItem(FOLDER_LOCK_KEY)!=='false';
-  const saved=localStorage.getItem(COLLECTION_OPERATOR_KEY);
-  collectionOperator=['OFF','OR','AND'].includes(saved)?saved:'OFF';
-}catch(_){/* private browsing: defaults */}
-function activeAlbums(){return [...selectedAlbumNames].filter(name=>albums.has(name))}
-function currentAlbum(){return activeAlbums()[0]||null}
-function collectionHasSelection(){return activeAlbums().length>0||selectedTagKeys.size>0}
-function restoreCollectionView(){
-  const name=currentAlbum();
-  activeView=name?{type:'album',name}:selectedTagKeys.size?{type:'tags'}:{type:'all'};
-  // An unlocked folder defaults back to the whole library when collections are cleared.
-  if(!collectionHasSelection()&&!folderLocked)el('folder').value='';
-}
-function normalizeCollectionsForMode(){
-  if(collectionOperator!=='OFF')return;
-  const albumsChosen=activeAlbums();
-  if(albumsChosen.length){selectedAlbumNames=new Set([albumsChosen[0]]);selectedTagKeys.clear();}
-  else if(selectedTagKeys.size>1)selectedTagKeys=new Set([[...selectedTagKeys][0]]);
-  restoreCollectionView();
+let folderLocked=true,collectionOperator='OFF';
+try{folderLocked=localStorage.getItem(FOLDER_LOCK_KEY)!=='false';const stored=localStorage.getItem(COLLECTION_OPERATOR_KEY);collectionOperator=['OFF','OR','AND'].includes(stored)?stored:'OFF'}catch(_){/* private browsing: defaults */}
+function currentAlbum(){return [...selectedAlbumNames].find(name=>albums.has(name))||null}
+function collectionHasSelection(){return selectedAlbumNames.size>0||selectedTagKeys.size>0}
+function resetCollections(){selectedAlbumNames.clear();selectedTagKeys.clear();activeView={type:'all'};if(!folderLocked)el('folder').value='';}
+function setCollectionView(){activeView=selectedAlbumNames.size?{type:'album',name:currentAlbum()}:selectedTagKeys.size?{type:'tags'}:{type:'all'};if(!collectionHasSelection()&&!folderLocked)el('folder').value='';}
+function chooseCollection(type,name){
+ const isAlbum=type==='album',key=isAlbum?name:name.toLocaleLowerCase('cs');
+ const target=isAlbum?selectedAlbumNames:selectedTagKeys;
+ const wasSelected=target.has(key);
+ if(collectionOperator==='OFF'){selectedAlbumNames.clear();selectedTagKeys.clear();if(!wasSelected)target.add(key)}
+ else if(wasSelected)target.delete(key);else target.add(key);
+ setCollectionView();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender();
 }
 
 function visibleAlbumCount(paths){let count=0;for(const p of paths)if(byPath.has(p)&&!trash.has(p))count++;return count}
@@ -1011,7 +1007,8 @@ async function deleteAlbum(name){
     if(!ad)throw Error('The albums directory does not exist');
     recordUndo('remove album');
     await ad.removeEntry(name+'.txt');
-    albums.delete(name);selectedAlbumNames.delete(name);restoreCollectionView();
+    albums.delete(name);
+    if(selectedAlbumNames.delete(name))setCollectionView();
     renderAlbumList();filterAndRender();updateMaintenance();
     toast('Album “'+name+'” deleted. Original media is unchanged.');
   }catch(e){toast('Could not delete album: '+e.message)}
@@ -1323,7 +1320,7 @@ async function activateLibrary(picked){
   if(thumbResetting||deletingMedia)throw Error('Wait for the current gallery maintenance operation to finish.');
   await flushThumbManifest();await saveQueue.catch(()=>{});
   scanNo++;clearTimeout(fileInfoTimer);if(el('viewer').open)closeViewer();clearThumbs();
-  clearSelection();lastUndo=null;selectedAlbumNames.clear();selectedTagKeys.clear();root=picked;configuredRootPath='';dirCache=new Map([['',picked]]);images=[];byPath.clear();
+  clearSelection();lastUndo=null;root=picked;configuredRootPath='';dirCache=new Map([['',picked]]);images=[];byPath.clear();
   el('libraryName').textContent=picked.name;activeView={type:'all'};visibleCount=80;
   el('folder').value='';el('kind').value='';el('query').value='';setStatus('Loading metadata…');
   await loadMetadata();await loadFullPathConfig();await autoConfigureFullPath();await loadThumbManifest();await loadFileInfo();
@@ -1447,8 +1444,7 @@ async function addCollection(){
 async function removeCollection(){
   if(!root)return;
   if(collectionMode==='albums'){
-    // Remove one selected album at a time; selection may contain several.
-    const name=currentAlbum();if(name)await deleteAlbum(name);
+    if(activeView.type==='album')await deleteAlbum(activeView.name);
     return;
   }
   const targets=new Set(selectedTagKeys);
@@ -1460,29 +1456,31 @@ async function removeCollection(){
     const filteredValues=values.filter(x=>!targets.has(x.toLocaleLowerCase('cs')));
     if(filteredValues.length!==values.length){changed++;if(filteredValues.length)tags.set(p,filteredValues);else tags.delete(p)}
   }
-  selectedTagKeys.clear();restoreCollectionView();
+  selectedTagKeys.clear();setCollectionView();
   await saveTags();renderTagList();filterAndRender();toast(`Removed selected tags from ${changed} media files.`);
 }
 
 function renderAlbumSelector(){const s=el('albumSelect'),old=s.value;s.replaceChildren(new Option('Choose album',''));for(const name of [...albums.keys()].sort((a,b)=>a.localeCompare(b,'cs')))s.add(new Option(name,name));if(albums.has(old))s.value=old;updateAlbumButton()}
 function filterAndRender(){
   const q=el('query').value.trim().toLocaleLowerCase('cs'),folder=el('folder').value,kind=el('kind').value;
-  const chosenAlbums=activeAlbums(),chosenTags=[...selectedTagKeys],hasCollections=chosenAlbums.length>0||chosenTags.length>0;
+  const albumNames=[...selectedAlbumNames].filter(name=>albums.has(name)),albumSets=albumNames.map(name=>albums.get(name)),tagKeys=[...selectedTagKeys];
+  const collectionsSelected=albumNames.length>0||tagKeys.length>0;
+  const globalScope=collectionsSelected&&!folderLocked;
+  // OR is always a global, temporary union. The folder dropdown value is never changed.
   filtered=images.filter(item=>{
     const path=item.path;
     if((activeView.type==='trash')!==trash.has(path))return false;
     if(activeView.type==='favorites'&&!favorites.has(path))return false;
-    if(hasCollections){
+    if(collectionsSelected){
       const itemTags=tags.get(path)||[];
-      const albumHits=chosenAlbums.map(name=>albums.get(name)?.has(path)??false);
-      const tagHits=chosenTags.map(key=>itemTags.some(t=>t.toLocaleLowerCase('cs')===key));
-      const hits=[...albumHits,...tagHits];
-      const matches=collectionOperator==='OR'?hits.some(Boolean):hits.every(Boolean);
+      const hasTag=key=>itemTags.some(t=>t.toLocaleLowerCase('cs')===key);
+      const matches=collectionOperator==='OR'
+        ?(albumSets.some(members=>members.has(path))||tagKeys.some(hasTag))
+        :(albumSets.every(members=>members.has(path))&&tagKeys.every(hasTag));
       if(!matches)return false;
     }
     if(kind&&item.kind!==kind)return false;
-    // Unlocked collections are global without altering the displayed folder selector.
-    if((folderLocked||!hasCollections)&&folder&&!path.startsWith(folder+'/'))return false;
+    if(!globalScope&&folder&&!path.startsWith(folder+'/'))return false;
     if(q&&!path.toLocaleLowerCase('cs').includes(q)&&!(tags.get(path)||[]).some(t=>t.toLocaleLowerCase('cs').includes(q)))return false;
     return true;
   });
@@ -2147,7 +2145,7 @@ async function deleteTrashPaths(onlySelected){
 
 function moveViewer(step){const i=filtered.findIndex(x=>x.path===currentPath);if(i>=0&&filtered.length)openViewer(filtered[(i+step+filtered.length)%filtered.length].path)}
 function editTags(){if(!currentPath)return;recordUndo('edit tags');const arr=[...new Set(el('tagInput').value.split(',').map(cleanTag).filter(Boolean))];if(arr.length){tags.set(currentPath,arr);captureSignature(currentPath)}else tags.delete(currentPath);el('tagInput').value=arr.join(', ');saveTags();renderTagList();if(el('query').value||activeView.type==='tags')filterAndRender();toast('Tags queued for saving.')}
-function changeView(type){clearSelection();selectedTagKeys.clear();selectedAlbumNames.clear();activeView={type};if(!folderLocked)el('folder').value='';visibleCount=80;filterAndRender();renderAlbumList();renderTagList()}
+function changeView(type){clearSelection();selectedTagKeys.clear();selectedAlbumNames.clear();activeView={type};if(type==='all'&&!folderLocked)el('folder').value='';visibleCount=80;renderAlbumList();renderTagList();filterAndRender()}
 function debounce(fn,ms){let timer;return(...a)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...a),ms)}}
 // Browser-native hover tooltips are intentionally concise, with accessibility labels.
 function galleryCollectionDialog({title,message='',input=false,value='',action='Confirm',danger=false}={}){
@@ -2228,7 +2226,7 @@ async function undoLastEdit(){
       });
     }
     confirmedActions.clear();previousSelectionSignature='';
-    selectedAlbumNames=new Set(activeAlbums());restoreCollectionView();
+    if(activeView.type==='album'&&!albums.has(activeView.name))activeView={type:'all'};
     clearSelection();renderAlbumList();renderTagList();filterAndRender();
     if(el('viewer').open&&currentPath){updateViewerFavorite();updateViewerTrashButtons();renderViewerCollections();}
     toast('Undid: '+snapshot.label);
@@ -2238,8 +2236,8 @@ async function undoLastEdit(){
 
 function selectionCountText(){return selectedPaths.size?` | ${selectedPaths.size.toLocaleString('cs-CZ')} selected`:''}
 function updateResultsLine(){
-  const slice=Math.min(visibleCount,filtered.length),album=currentAlbum(),nAlbums=activeAlbums().length;
-  const prefix=activeView.type==='trash'?'Trash · ':(collectionHasSelection()?(nAlbums?nAlbums+' album'+(nAlbums!==1?'s':'')+(selectedTagKeys.size?' + '+selectedTagKeys.size+' tag'+(selectedTagKeys.size!==1?'s':''):''):'Tags '+selectedTagKeys.size)+' '+collectionOperator+' · ':'');
+  const slice=Math.min(visibleCount,filtered.length),album=currentAlbum();
+  const prefix=activeView.type==='trash'?'Trash · ':(collectionHasSelection()?(album?'Album'+(selectedTagKeys.size?' + '+selectedTagKeys.size+' tags':''):'Tags '+selectedTagKeys.size)+' '+collectionOperator+' · ':'');
   const node=el('results');if(node)node.textContent=prefix+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
 }
 function updateSelectedDeleteButton(){
@@ -2280,7 +2278,7 @@ function saveTags(){
   return enqueueSave('tags', async()=>{ const d=await getMetaDir(true,r); await writeText(d,'tags.tsv',body+(body?'\n':'')); const cat=[...tagCatalog].map(cleanTag).filter(Boolean).sort((a,b)=>a.localeCompare(b,'cs',{numeric:true})).join('\n'); await writeText(d,TAG_CATALOG_NAME,cat+(cat?'\n':'')); });
 }
 async function loadMetadata(){
-  favorites=new Set();tags=new Map();albums=new Map();trash=new Set();tagCatalog=new Set();
+  favorites=new Set();tags=new Map();albums=new Map();trash=new Set();tagCatalog=new Set();selectedAlbumNames.clear();selectedTagKeys.clear();
   const d=await getMetaDir(false);if(!d)return;
   favorites=new Set(lines(await readText(d,'favorites.txt')));
   trash=new Set(lines(await readText(d,TRASH_NAME)).filter(validPath));
@@ -2304,13 +2302,7 @@ function renderTagList(){
     chip.onclick=async ev=>{
       ev.preventDefault();
       if(selectedPaths.size&&ev.target.closest('.chip-action-label')){await applySelectedTag(tag.key);return}
-      clearSelection();
-      if(selectedTagKeys.has(tag.key))selectedTagKeys.delete(tag.key);
-      else{
-        if(collectionOperator==='OFF'){selectedTagKeys.clear();selectedAlbumNames.clear();}
-        selectedTagKeys.add(tag.key);
-      }
-      restoreCollectionView();visibleCount=80;filterAndRender();renderAlbumList();
+      chooseCollection('tag',tag.key);
     };
     list.append(chip);
   }
@@ -2332,14 +2324,7 @@ function renderAlbumList(){
     btn.append(label,count,plus);
     btn.onclick=async e=>{
       if(selectedPaths.size&&e.target.closest('.row-plus')){await applySelectedCategory('album:'+name);return}
-      clearSelection();
-      // Clicking the already selected album again unselects it. Preserve selected tags when present.
-      if(selectedAlbumNames.has(name))selectedAlbumNames.delete(name);
-      else{
-        if(collectionOperator==='OFF'){selectedAlbumNames.clear();selectedTagKeys.clear();}
-        selectedAlbumNames.add(name);
-      }
-      restoreCollectionView();visibleCount=80;filterAndRender();renderTagList();
+      chooseCollection('album',name);
     };
     host.append(btn);
   }
@@ -2361,8 +2346,7 @@ async function addCollection(){
 async function removeCollection(){
   if(!root)return;
   if(collectionMode==='albums'){
-    // Remove one selected album at a time; selection may contain several.
-    const name=currentAlbum();if(name)await deleteAlbum(name);
+    if(activeView.type==='album')await deleteAlbum(activeView.name);
     return;
   }
   const targets=new Set(selectedTagKeys);if(!targets.size)return;
@@ -2372,7 +2356,7 @@ async function removeCollection(){
   recordUndo('remove tags');
   for(const name of [...tagCatalog])if(targets.has(name.toLocaleLowerCase('cs')))tagCatalog.delete(name);
   for(const [p,values] of [...tags]){const kept=values.filter(x=>!targets.has(x.toLocaleLowerCase('cs')));if(kept.length)tags.set(p,kept);else tags.delete(p)}
-  selectedTagKeys.clear();restoreCollectionView();
+  selectedTagKeys.clear();setCollectionView();
   await saveTags();renderTagList();filterAndRender();toast('Selected tags removed.');
 }
 function navButtonActive(){
@@ -2393,7 +2377,7 @@ function navButtonActive(){
   document.querySelectorAll('#tagList [data-tag]').forEach(button=>{
     const active=selectedTagKeys.has(button.dataset.tag);button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
   });
-  el('removeCollection').disabled=!root||(collectionMode==='albums'?!selectedAlbumNames.size:!selectedTagKeys.size);
+  el('removeCollection').disabled=!root||(collectionMode==='albums'?!albumName:!selectedTagKeys.size);
   updateSelectionActionHints();
 }
 function syncBulkAlbums(){ const box=el('bulkAlbum'); if(!box) return; const old=box.value; box.replaceChildren(new Option('Choose album…','')); for(const name of [...albums.keys()].sort((a,b)=>a.localeCompare(b,'en'))) box.add(new Option(name,name)); if(albums.has(old)) box.value=old; }
@@ -2488,7 +2472,7 @@ function selectionSignature(){ return [...selectedPaths].sort().join('\n'); }
 function actionIsCurrentCategory(key){
   if(key==='favorites')return activeView.type==='favorites';
   if(key==='trash')return activeView.type==='trash';
-  return key.startsWith('album:')&&selectedAlbumNames.has(key.slice(6));
+  return key.startsWith('album:')&&currentAlbum()===key.slice(6);
 }
 function actionMode(key){
   const items=[...selectedPaths].filter(p=>byPath.has(p));
@@ -2635,29 +2619,32 @@ el('rescan').onclick=scan;
 el('navAll').onclick=()=>changeView('all'); el('navFav').onclick=e=>{ if(e.target.closest('.row-plus')) return; changeView('favorites'); }; el('navTrash').onclick=e=>{ if(e.target.closest('.row-plus')) return; changeView('trash'); };
 el('showAlbums').onclick=()=>switchCollections('albums');el('showTags').onclick=()=>switchCollections('tags');
 el('collectionOperator').onclick=()=>{
-  collectionOperator=collectionOperator==='OFF'?'OR':collectionOperator==='OR'?'AND':'OFF';
-  normalizeCollectionsForMode();
+  const cycle=['OFF','OR','AND'];
+  collectionOperator=cycle[(cycle.indexOf(collectionOperator)+1)%cycle.length];
+  // OFF is an exclusive filter: keep one item from the visible sidebar, never both.
+  if(collectionOperator==='OFF'&&collectionHasSelection()){
+    if(collectionMode==='tags'&&selectedTagKeys.size){const first=selectedTagKeys.values().next().value;selectedTagKeys=new Set([first]);selectedAlbumNames.clear()}
+    else if(selectedAlbumNames.size){const first=selectedAlbumNames.values().next().value;selectedAlbumNames=new Set([first]);selectedTagKeys.clear()}
+    else if(selectedTagKeys.size){const first=selectedTagKeys.values().next().value;selectedTagKeys=new Set([first])}
+    setCollectionView();
+  }
   try{localStorage.setItem(COLLECTION_OPERATOR_KEY,collectionOperator)}catch(_){}
-  syncFilterControls();clearSelection();visibleCount=80;filterAndRender();renderAlbumList();renderTagList();
+  syncFilterControls();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender();
 };
 el('folderLock').onchange=e=>{
   folderLocked=e.target.checked;
   try{localStorage.setItem(FOLDER_LOCK_KEY,String(folderLocked))}catch(_){}
-  if(!folderLocked&&!collectionHasSelection())el('folder').value='';
   syncFilterControls();clearSelection();visibleCount=80;filterAndRender();
 };
 el('collectionQuery').addEventListener('input',debounce(()=>{if(collectionMode==='albums')renderAlbumList();else renderTagList()},90));
 el('newCollection').onclick=()=>void addCollection(); el('removeCollection').onclick=()=>void removeCollection();
 el('query').addEventListener('input',debounce(()=>{clearSelection(); visibleCount=80; filterAndRender()},150));
 el('folder').onchange=el('kind').onchange=()=>{clearSelection(); visibleCount=80; filterAndRender()};
-// Chrome/Edge do not consistently scroll a closed native select with the wheel.
-// Cycle folder options directly when the pointer is over the combobox.
 el('folder').addEventListener('wheel',event=>{
-  if(event.ctrlKey||!event.deltaY||el('folder').disabled)return;
+  const select=el('folder');if(!root||select.disabled||select.options.length<2)return;
   event.preventDefault();
-  const select=el('folder'),step=event.deltaY>0?1:-1;
-  const next=Math.max(0,Math.min(select.options.length-1,select.selectedIndex+step));
-  if(next!==select.selectedIndex){select.selectedIndex=next;select.dispatchEvent(new Event('change',{bubbles:true}));}
+  const next=Math.max(0,Math.min(select.options.length-1,select.selectedIndex+(event.deltaY>0?1:-1)));
+  if(next!==select.selectedIndex){select.selectedIndex=next;select.dispatchEvent(new Event('change',{bubbles:true}))}
 },{passive:false});
 el('loadMore').onclick=()=>{visibleCount+=80; renderCards()};
 el('layoutToggle').onclick=toggleLayout;
