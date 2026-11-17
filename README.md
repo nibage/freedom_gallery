@@ -243,3 +243,10 @@ This release is an **`index.html`-only upgrade**. No server, database, metadata 
 All remaining JavaScript `alert`, `confirm` and `prompt` popups have been replaced with the gallery's custom modal. This includes warnings when selecting a library different from the one containing `index.html`, removing a remembered library, manual metadata cleanup, legacy tag creation/removal, configuring and validating the absolute library path, and selecting/copying a path if browser clipboard access fails. The existing in-app permanent-delete confirmations remain unchanged.
 
 Modal dialogs can be dismissed with **Cancel**, **×**, **Esc**, or clicking outside. Information-only messages have an **OK** button. Longer paths can be entered or selected without the former 80-character tag-name limit; path configuration uses a 2,048-character field. Operating-system folder selection and browser permission requests are intentionally still browser-native.
+
+## v7.7.2 — Readable filter dropdowns and explicit viewer membership buttons
+
+- The **All folders** and **Photos & videos** dropdowns no longer clip text. Filters now have a minimum height of 52px and grow with the font; adjacent Fix folder and Instagram controls stretch to the same height.
+- In the **opened image viewer**, clicking an album or tag **name** only selects it for the existing global **Remove** action. It does **not** change the open image's album/tag membership.
+- Only the green **+ / −** control adds or removes the open photo from an album or tag. These icons are real keyboard-accessible buttons with descriptive labels; touch devices show them without requiring hover.
+- The changes are styling and viewer interactions only; no index, cache, photo, or metadata migrations are needed.
