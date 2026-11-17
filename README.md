@@ -237,3 +237,9 @@ Only `__gallery/index.html` changed; personal metadata and thumbnail formats rem
 - **Matched control heights:** Filter inputs, dropdowns, Lock folder, Instagram mode, the Albums / Tags switch, New / Remove, and the OFF / OR / AND switch use a consistent **38 px height** when displayed horizontally. Responsive line wrapping does not change individual control height.
 
 This release is an **`index.html`-only upgrade**. No server, database, metadata migration, reindexing, or thumbnail regeneration is needed merely to install it. The gallery still stores personal data in `__gallery/data/`. Only user-confirmed maintenance and permanent deletion can remove files or stale metadata.
+
+## v7.7.1 — Consistent in-app dialogs
+
+All remaining JavaScript `alert`, `confirm` and `prompt` popups have been replaced with the gallery's custom modal. This includes warnings when selecting a library different from the one containing `index.html`, removing a remembered library, manual metadata cleanup, legacy tag creation/removal, configuring and validating the absolute library path, and selecting/copying a path if browser clipboard access fails. The existing in-app permanent-delete confirmations remain unchanged.
+
+Modal dialogs can be dismissed with **Cancel**, **×**, **Esc**, or clicking outside. Information-only messages have an **OK** button. Longer paths can be entered or selected without the former 80-character tag-name limit; path configuration uses a 2,048-character field. Operating-system folder selection and browser permission requests are intentionally still browser-native.
