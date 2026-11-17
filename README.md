@@ -6,7 +6,7 @@ A **portable, offline photo and video gallery** in one `__gallery/index.html` fi
 
 ## Try the included demo after cloning
 
-This repository includes a **`demo-gallery/`** folder alongside `__gallery/`, containing 16 original SVG sample illustrations, pre-populated favorites, tags, and virtual albums. No extra downloads needed.
+This repository includes a **`demo-gallery/`** folder alongside `__gallery/`, containing 16 original SVG sample illustrations, pre-populated favorites, dozens of tags, and 18 virtual albums for testing long lists. No extra downloads needed.
 
 1. Clone or download this repository.
 2. Open `__gallery/index.html` in **Chrome or Edge** (double-click it, no server).
@@ -33,6 +33,7 @@ Pictures/
         ├── files.txt      # relative path inventory
         ├── favorites.txt  # one path per line
         ├── tags.tsv       # path<TAB>tag1, tag2
+        ├── tag-catalog.txt # reusable tags, including unassigned tags
         ├── trash.txt      # reversible in-gallery trash list
         ├── media-info.tsv # signatures for move/rename suggestions
         ├── thumbs.tsv     # WebP thumbnail manifest
@@ -64,7 +65,7 @@ If a remembered folder is moved, deleted, disconnected, or access is revoked, au
 | **Classic / Instagram** | Switch between labeled cards and a gapless square-tile grid. The selected layout is remembered. |
 | **Folder / type filters** | Search inside a chosen folder and its subfolders, photos only, videos only, or all media. |
 | **Albums / Tags** | Switch the sidebar between searchable album names and tag chips. Selected tags have a **green outline**; selecting several tags uses **AND**, matching only files containing all of them. |
-| **+ New / − Remove** | Create or delete a virtual album; in Tags mode, create a new tag for selected media or remove selected tags from all media. Original files are never deleted by these collection actions. |
+| **+ New / − Remove** | Create or delete virtual albums or reusable tags, even before assigning tags to photos. Removing a tag clears its assignments without deleting media. Original files are never deleted by these collection actions. |
 | **Favorites / Trash** | Filter favorite files or view media hidden in the reversible in-gallery Trash. |
 | **Show all in folder** | Show all indexed media in the current file's folder and its subfolders **inside the gallery**. It does not launch Explorer or Finder. |
 | **Copy full path** | Copy the complete path if known/inferred; otherwise enter the library root path once. |
@@ -75,15 +76,16 @@ All main controls and viewer actions include mouse-hover `title` tooltips.
 
 - **Ctrl+click / Cmd+click** toggles one image or video without opening it.
 - **Shift+click** selects an inclusive range between the selection anchor and clicked tile (only among currently loaded/visible cards).
-- **Click Select** to use ordinary clicks for selection rather than opening.
 - **Mouse drag** creates a selection rectangle over displayed cards.
 - **Long-press** a thumbnail (mouse, touch, or stylus) to begin selection. You can then slide across more thumbnails to add them, where supported by the browser.
 
-A selected-file bar lets you **Favorite selected**, **Add to album**, **Add tag**, or **Move to Trash** / **Restore selected**. Bulk actions never physically delete media. The temporary selection clears when filters/views change or the index is rebuilt.
+Selection count appears inline with results (`| N selected`). Hover Favorites, Trash, or an album in the sidebar for its **+** action; hover a tag for **Mark tag**. Click to apply the selected action. Esc or a click outside the selection clears it. No separate Select button or selection toolbar is needed. These bulk actions never physically delete originals.
 
 ### Albums and tags
 
-Albums are text files of relative paths: `data/albums/<album name>.txt`. A file can belong to many albums without being copied. Tags live together in `data/tags.tsv` as tab-separated rows; no database and no per-tag folders are created. The tags sidebar lists at most 300 matching tags at a time; search narrows the list. Long album names are ellipsized, with their complete names in hover help. Both lists are scrollable.
+Within a photo viewer, actions are ordered Favorites, Trash, a compact searchable Albums/Tags panel with clickable memberships and + New / − Remove, then Show all in folder and Copy full path. Changes save when clicked; no separate Save tags action.
+
+Albums are text files of relative paths: `data/albums/<album name>.txt`. A file can belong to many albums without being copied. Tags live together in `data/tags.tsv` as tab-separated rows; reusable names (including unused tags) live in `data/tag-catalog.txt`. No database and no per-tag folders are created. The tags sidebar lists at most 500 matching tags at a time; search narrows the list. Long album names are ellipsized, with their complete names in hover help. Both lists are scrollable.
 
 Normal search and folder selection combine with **AND**. Choosing an album or any tag resets the folder filter to **All folders**, so the collection first shows media across the library. You can then select a folder to narrow that collection.
 
@@ -105,7 +107,7 @@ The file index and album/tag paths are **relative to the selected library root**
 
 - `←` / `→` — previous / next item in viewer (except when video controls have focus)
 - `F` — toggle favorite for the currently open item
-- `Esc` — close viewer / confirmation
+- `Esc` — close viewer / confirmation, or clear temporary selection
 - `/` — focus media search
 - `Ctrl`/`Cmd`+click — toggle item selection
 - `Shift`+click — select an inclusive range
@@ -115,4 +117,8 @@ The file index and album/tag paths are **relative to the selected library root**
 
 To upgrade from v6.10 (or an earlier version using `__gallery/data/`), **replace only `__gallery/index.html`**. Existing text files and high-resolution thumbnails are preserved. No legacy metadata migration or separate server is required.
 
-The included `.gitignore` intentionally only tracks the app, README, and **bundled demo**. Do **not** publish your personal photos or the generated `__gallery/data/` from your real library. This repository is distributed under the license published in the GitHub repository (see `LICENSE`).
+The included `.gitignore` intentionally only tracks the app, README, and **bundled demo** including its reusable tag catalog. Do **not** publish your personal photos or the generated `__gallery/data/` from your real library. This repository is distributed under the license published in the GitHub repository (see `LICENSE`).
+
+## v7.1 interface refresh
+
+The color schemes reflect the Local StackEdit Wiki screenshots: a burgundy-red header in Light and gold accents in Dark, with green outlines for selected tags and Instagram mode. Rebuild index and Rebuild thumbnails share a bottom-left sidebar toolbar, while top navigation is right-aligned. The viewer has inline collection controls instead of Save tags, and multi-selection uses sidebar hover actions instead of a selection bar.

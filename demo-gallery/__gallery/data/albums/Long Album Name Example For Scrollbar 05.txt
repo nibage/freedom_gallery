@@ -1,0 +1,2 @@
+Trips/Coastline/Sea cliffs.svg
+Trips/City/Old town.svg

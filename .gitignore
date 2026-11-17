@@ -13,3 +13,4 @@ __gallery/*
 !demo-gallery/__gallery/data/tags.tsv
 !demo-gallery/__gallery/data/albums/*.txt
 # Any generated demo thumbnails / media indexes remain ignored.
+!demo-gallery/__gallery/data/tag-catalog.txt

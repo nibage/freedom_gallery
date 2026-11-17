@@ -2,3 +2,4 @@ Landscapes/Alpine sunrise.svg
 Trips/Coastline/Hidden cove.svg
 Trips/Coastline/Sunset beach.svg
 Trips/City/Rooftop view.svg
+Nature/Northern lights.svg

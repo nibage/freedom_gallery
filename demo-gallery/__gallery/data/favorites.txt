@@ -3,3 +3,4 @@ Landscapes/Golden valley.svg
 Trips/Coastline/Hidden cove.svg
 Trips/Coastline/Sea cliffs.svg
 Trips/City/Rooftop view.svg
+Nature/Northern lights.svg

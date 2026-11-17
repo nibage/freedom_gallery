@@ -12,3 +12,5 @@ To try it after cloning this repository:
 Everything happens locally. The generated index and preview files in the demo data folder are ignored by Git. Do not use permanent deletion on demo media unless you intend to delete those example files.
 
 This demo is intentionally separate from the actual gallery source `../__gallery/index.html`.
+
+This demo contains 18 albums (including long names) and a larger tag catalog for testing scrolling and selection.

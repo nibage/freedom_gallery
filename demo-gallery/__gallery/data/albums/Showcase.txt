@@ -1,0 +1,5 @@
+Landscapes/Alpine sunrise.svg
+Landscapes/Golden valley.svg
+Landscapes/Lavender hills.svg
+Trips/City/Rooftop view.svg
+Nature/Northern lights.svg

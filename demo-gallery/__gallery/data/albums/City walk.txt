@@ -1,0 +1,3 @@
+Trips/City/Old town.svg
+Trips/City/Rooftop view.svg
+Trips/City/Evening street.svg

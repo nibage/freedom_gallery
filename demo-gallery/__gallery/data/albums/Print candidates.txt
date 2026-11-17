@@ -1,0 +1,3 @@
+Landscapes/Golden valley.svg
+Landscapes/Misty mountains.svg
+Nature/Birds near water.svg

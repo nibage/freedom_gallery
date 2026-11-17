@@ -1,0 +1,5 @@
+Landscapes/Blue lake.svg
+Landscapes/Misty mountains.svg
+Landscapes/Pine forest.svg
+Nature/Birds near water.svg
+Nature/Snow path.svg

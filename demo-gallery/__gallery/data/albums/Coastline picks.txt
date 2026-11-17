@@ -1,0 +1,3 @@
+Trips/Coastline/Hidden cove.svg
+Trips/Coastline/Sunset beach.svg
+Trips/Coastline/Sea cliffs.svg
