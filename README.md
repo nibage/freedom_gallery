@@ -60,15 +60,15 @@ If a remembered folder is moved, deleted, disconnected, or access is revoked, au
 | **Recent libraries** | Shows the **currently selected** library and lets you switch remembered folders. |
 | **Remove library** | Remove the selected shortcut from browser history. Does **not** delete anything on disk. |
 | **Rebuild index** | Rescan subfolders after adding, moving, renaming, or deleting files. Review proposed move/rename metadata transfers. After a **successful** scan, remove stale file references and outdated cached previews automatically; no backups are made. |
-| **Rebuild thumbnails** | Reset the derived WebP cache. Use it if previews look broken or dated; photos, tags, albums, and file index remain unchanged. |
+| **Remove thumbs** | Reset the derived WebP cache. Use it if previews look broken or dated; photos, tags, albums, and file index remain unchanged. |
 | **Theme: System / Light / Dark** | Follow your OS preference, or override it independently for this HTML gallery. |
 | **Classic / Instagram** | Switch between labeled cards and a gapless square-tile grid. The selected layout is remembered. |
 | **Folder / type filters** | Search inside a chosen folder and its subfolders, photos only, videos only, or all media. |
 | **Albums / Tags** | Switch the sidebar between searchable album names and tag chips. Selected tags have a **green outline**; selecting several tags uses **AND**, matching only files containing all of them. |
 | **+ New / − Remove** | Create or delete virtual albums or reusable tags, even before assigning tags to photos. Removing a tag clears its assignments without deleting media. Original files are never deleted by these collection actions. |
-| **Favorites / Trash** | Filter favorite files or view media hidden in the reversible in-gallery Trash. |
-| **Show all in folder** | Show all indexed media in the current file's folder and its subfolders **inside the gallery**. It does not launch Explorer or Finder. |
-| **Copy full path** | Copy the complete path if known/inferred; otherwise enter the library root path once. |
+| **All media / Favorites / Trash** | Filter favorite files or view media hidden in the reversible in-gallery Trash. |
+| **Show folder** | Show all indexed media in the current file's folder and its subfolders **inside the gallery**. It does not launch Explorer or Finder. |
+| **Copy path** | Copy the complete path if known/inferred; otherwise enter the library root path once. |
 
 All main controls and viewer actions include mouse-hover `title` tooltips.
 
@@ -76,7 +76,7 @@ All main controls and viewer actions include mouse-hover `title` tooltips.
 
 - **Ctrl+click / Cmd+click** toggles one image or video without opening it.
 - **Shift+click** selects an inclusive range between the selection anchor and clicked tile (only among currently loaded/visible cards).
-- **Mouse drag** creates a selection rectangle over displayed cards.
+- **Mouse drag** creates a selection rectangle over displayed cards, even when started from the empty area above or below the grid; the selection persists after releasing the mouse button.
 - **Long-press** a thumbnail (mouse, touch, or stylus) to begin selection. You can then slide across more thumbnails to add them, where supported by the browser.
 
 Selection count appears inline with results (`| N selected`). Hover Favorites, Trash, or an album in the sidebar for its **+** action; hover a tag for **Mark tag**. Click to apply the selected action. Esc or a click outside the selection clears it. No separate Select button or selection toolbar is needed. These bulk actions never physically delete originals.
@@ -93,7 +93,7 @@ Normal search and folder selection combine with **AND**. Choosing an album or an
 
 `Rebuild index` examines the actual folder tree, optionally transfers metadata for recognized moves/renames after approval, and cleans obsolete references/previews. **No automatic backup is created.** Because automatic cleanup removes references to missing media, ensure you selected the correct library and all expected drives/mounts are available *before rebuilding*. As a safety check, a rebuild with a suspiciously large disappearance of files **skips destructive cleanup**.
 
-If images break after a mass rename or filesystem reorganization: first **Rebuild index**, then **Rebuild thumbnails** only if the paths are correct and previews still fail. Avoid deleting `data/`, since it also contains favorites, albums, and tags.
+If images break after a mass rename or filesystem reorganization: first **Rebuild index**, then **Remove thumbs** only if the paths are correct and previews still fail. Avoid deleting `data/`, since it also contains favorites, albums, and tags.
 
 The file index and album/tag paths are **relative to the selected library root**, making them portable across Windows, macOS, and Linux. Browser-granted folder permissions and absolute paths are different on each machine.
 
@@ -122,3 +122,12 @@ The included `.gitignore` intentionally only tracks the app, README, and **bundl
 ## v7.1 interface refresh
 
 The color schemes reflect the Local StackEdit Wiki screenshots: a burgundy-red header in Light and gold accents in Dark, with green outlines for selected tags and Instagram mode. Rebuild index and Rebuild thumbnails share a bottom-left sidebar toolbar, while top navigation is right-aligned. The viewer has inline collection controls instead of Save tags, and multi-selection uses sidebar hover actions instead of a selection bar.
+
+### v7.2 usability update
+
+- Neutral selected button backgrounds in Light mode, retaining green outlines; narrower Albums / Tags switch.
+- Counters for All media, Favorites, and Trash.
+- Context-sensitive + / ✓ / − actions for bulk adding and removing favorites, Trash items and album members.
+- Marquee selection persists after mouse release and starts from empty space above or below media, in Classic and Instagram modes.
+- Bottom-left maintenance buttons are equal width: Rebuild index and Remove thumbs.
+- Viewer buttons are vertically stacked: Favorites, Trash; then bottom-aligned Show folder and Copy path below five lines of collection space.
