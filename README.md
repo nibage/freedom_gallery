@@ -99,7 +99,7 @@ The file index and album/tag paths are **relative to the selected library root**
 
 ## Deletion warning
 
-**Move to Trash** adds a path to `data/trash.txt` and hides it from normal views; the original file **stays where it is** and can be restored.
+**Move to Trash** (also the `Delete` keyboard shortcut) adds a path to `data/trash.txt` and hides it from normal views; the original file **stays where it is** and can be restored. This reversible action does not require a confirmation dialog.
 
 **Delete permanently** and **Delete all** physically remove original files from disk after a confirmation dialog. The dialog closes harmlessly on Cancel, ×, Esc, or click outside. Permanent deletion **bypasses the operating-system Recycle Bin/Trash and cannot be undone**. There is no automatic backup. Test it on disposable files first.
 
@@ -109,6 +109,8 @@ The file index and album/tag paths are **relative to the selected library root**
 - `F` — toggle favorite for the currently open item
 - `Esc` — close viewer / confirmation, or clear temporary selection
 - `/` — focus media search
+- `Delete` — move the currently opened photo or selected files to **in-gallery Trash**, without confirmation; never permanently delete them
+- Classic view: click a filename bar to select a file; click its image to open it (even while other files are selected)
 - `Ctrl`/`Cmd`+click — toggle item selection
 - `Shift`+click — select an inclusive range
 - Drag / long-press — select a group of visible cards
@@ -153,3 +155,14 @@ The color schemes reflect the Local StackEdit Wiki screenshots: a burgundy-red h
 - The top-bar height is measured to keep sidebar alignment correct at different desktop widths and zoom settings; narrow/mobile layouts retain the side-by-side maintenance buttons.
 
 This is a UI-only change. Existing indexes, thumbnail caches, favorites, albums, and tags are untouched.
+
+## v7.3.2 — selection, tags, and viewer polish
+
+- Keyboard **Delete** now moves selected files or an open photo to reversible in-gallery Trash. It never performs permanent deletion; the permanent-delete buttons in Trash still require confirmation. **Move to Trash** no longer opens a confirmation dialog.
+- Album item counts align to the right, independent of name length.
+- Tag hover action toggles **+** (assign) and **−** (remove) for the selected media, based on existing tag membership or the selected tag filter. Only selected media are modified.
+- In Classic mode, clicking a filename bar selects the photo; clicking the picture opens it. Ctrl/Cmd-click, Shift-click, and drag selection remain available.
+- Drag selection can start in blank space above or below the rendered grid, including below the main gallery element.
+- The full-screen viewer keeps a fixed window size. Its albums/tags list expands to consume all available space between search and the bottom actions and scrolls without moving those actions. Images remain uncropped, with a small dark band above wide media.
+
+Existing indexes, thumbnails, and metadata files need no migration.
