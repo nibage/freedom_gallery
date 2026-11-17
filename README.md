@@ -226,3 +226,14 @@ No index or cache migration is needed; replacing `__gallery/index.html` preserve
 - **Viewer:** The original photo is centered without cropping, with equal black spacing above and below when the aspect ratio does not fill the fixed viewer stage.
 
 Only `__gallery/index.html` changed; personal metadata and thumbnail formats remain unchanged. No migration, rescan, or regeneration required.
+
+## v7.7 — Finished filtering and consistent controls
+
+- **Favorites and Trash in OFF / OR / AND:** Favorites and Trash now participate in the same filter expression as albums and tags. OFF accepts one active category; OR includes a file matching **any** selected category; AND includes a file matching **every** selected category. This works across tabs and respects **Fix folder**. Click **All media** to clear all selected categories.
+- **Trash safety:** a hidden file only appears in mixed results when **Trash** is explicitly selected. Viewing filtered Trash files does **not** restore or delete them. **Delete selected** and **Delete all** remain available only when the Trash category is the sole active filter and require their existing permanent-deletion confirmation.
+- **Photo viewer membership controls:** Album and tag items display a green circular **+** on hover when the open file is not assigned and a green **−** when it is assigned. Clicking the item updates its membership and saves the corresponding human-readable metadata. The existing green selection style is retained.
+- **Custom maintenance confirmations:** **Remove thumbs** asks for confirmation in an in-app modal before removing derived WebP previews. **Rebuild index** now also asks for confirmation; the dialog explains that a successful scan may permanently clean stale metadata and previews. Cancel, ×, Esc, and clicking outside dismiss without running maintenance. Opening a brand-new library still scans automatically without prompting.
+- **Tag-name validation:** All **newly created or assigned** tag names must be between 1 and **80 characters**, matching the maximum album-name length. Existing longer legacy tags are not silently truncated or erased; they can be removed but cannot be newly assigned until renamed.
+- **Matched control heights:** Filter inputs, dropdowns, Lock folder, Instagram mode, the Albums / Tags switch, New / Remove, and the OFF / OR / AND switch use a consistent **38 px height** when displayed horizontally. Responsive line wrapping does not change individual control height.
+
+This release is an **`index.html`-only upgrade**. No server, database, metadata migration, reindexing, or thumbnail regeneration is needed merely to install it. The gallery still stores personal data in `__gallery/data/`. Only user-confirmed maintenance and permanent deletion can remove files or stale metadata.
