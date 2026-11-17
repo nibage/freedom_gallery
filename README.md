@@ -131,3 +131,17 @@ The color schemes reflect the Local StackEdit Wiki screenshots: a burgundy-red h
 - Marquee selection persists after mouse release and starts from empty space above or below media, in Classic and Instagram modes.
 - Bottom-left maintenance buttons are equal width: Rebuild index and Remove thumbs.
 - Viewer buttons are vertically stacked: Favorites, Trash; then bottom-aligned Show folder and Copy path below five lines of collection space.
+
+
+## v7.3 — UI and Trash improvements
+
+- In **Trash**, **Delete selected** sits immediately left of **Delete all**. It is disabled until one or more Trash items are selected; it permanently deletes **only those selected Trash files**, after explicit confirmation. Both actions bypass the operating system Trash and cannot be undone.
+- The maintenance toolbar stays at a stable bottom-left sidebar location when switching Classic/Instagram mode; hovering over Favorites, Trash or albums overlays the `+`/`−` controls instead of shifting the counts.
+- Choosing **Select library…** from Recent libraries launches the folder picker again, just like Open library.
+- Tags now show a green `+` on hover for assigning the tag to the current selection.
+- **+ New** and **− Remove** use a consistent in-app modal for album/tag creation and removal. Cancel, ×, Esc, or clicking outside dismiss the dialog without applying changes.
+- The photo viewer has a fixed-height collection area: five or fifty tags/albums will not resize it on desktop. Additional items scroll inside the collection panel, with an 8px gap below the search field.
+
+### Safety
+
+`Delete selected` is only available inside the in-gallery Trash. **Move to Trash** merely hides originals, but **Delete selected**, **Delete all**, and **Delete permanently** remove actual files from disk. Test permanent deletion with disposable media before using it on your archive.

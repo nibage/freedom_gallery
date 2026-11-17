@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.2</title>
+<title>Local Media Gallery v7.3</title>
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
   [hidden] {display:none!important}
@@ -251,6 +251,44 @@ html[data-theme="dark"] .layout-toggle[aria-pressed="true"] {
 #gallery .photo { user-select:none; -webkit-user-select:none; }
 @media (max-width:840px){ .aside-bottom-toolbar{position:sticky;bottom:0;flex:1 1 100%;width:100%;} .viewer-collection-panel{min-height:212px;} }
 
+
+/* v7.3: stable sidebar irrespective of tile layout and hover controls */
+@media(min-width:841px){
+  aside{position:sticky;top:68px;height:calc(100dvh - 68px);min-height:360px;align-self:start;overflow-y:auto;overscroll-behavior:contain}
+  .aside-bottom-toolbar{position:sticky;bottom:0;flex:0 0 auto;margin-top:auto;padding-bottom:5px}
+}
+#navFav .tag-count,#navTrash .tag-count, .collection-scroll .nav-btn .tag-count,
+body.has-selection #navFav .tag-count,body.has-selection #navTrash .tag-count,
+body.has-selection .collection-scroll .nav-btn .tag-count{margin-left:auto!important;margin-right:0!important}
+body.has-selection .nav-btn:hover .row-plus{position:absolute;right:7px;background:var(--aside);z-index:2}
+.collection-scroll .nav-btn .row-plus{position:absolute;right:7px;background:var(--aside);z-index:2}
+body.has-selection .tag-chip:hover .chip-action-label{border:1px solid var(--ok);box-shadow:0 0 0 1px var(--ok) inset;min-width:20px;min-height:20px}
+.aside-bottom-toolbar .btn{min-width:0;min-height:34px;flex:1 1 0;max-width:none;white-space:nowrap;font-size:11px;padding:7px 2px}
+.instagram-mode .aside-bottom-toolbar,.instagram-mode .aside-bottom-toolbar .btn{visibility:visible!important;opacity:1}
+#gallery{min-height:60px}
+.results-toolbar{display:flex;align-items:center;gap:8px;min-height:38px}
+#results{flex:1 1 auto;min-width:0}
+#deleteSelectedTrash,#deleteAllTrash{flex:0 0 auto;font-size:11px;padding:7px 9px;min-height:31px}
+#deleteSelectedTrash:disabled{opacity:.35}
+/* Viewer must not resize when its collection changes or rows are added. */
+@media(min-width:841px){
+  #viewer{height:min(810px,94dvh)}
+  #viewer .viewer{height:100%;max-height:100%;min-height:0}
+  #viewer .stage{min-height:0}
+  #viewer .details{height:100%;max-height:100%;overflow:hidden;min-height:0}
+}
+.viewer-collection-panel{height:260px;min-height:260px;max-height:260px;flex:0 0 260px;overflow:hidden;display:flex;flex-direction:column}
+.viewer .collection-scroll.compact{height:auto;min-height:0;max-height:none;flex:1 1 auto;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable;padding-right:4px}
+#viewerTagList{margin-top:8px}
+.viewer .details .viewer-actions{flex:0 0 auto}
+.gallery-action-dialog{z-index:1001}
+.gallery-action-dialog .close{float:right;color:var(--text)}
+.gallery-action-dialog input{width:100%;min-height:38px}
+@media(max-width:840px){
+  #viewer .viewer{height:92dvh;max-height:92dvh;overflow-y:auto}
+  #viewer .details{max-height:none;height:auto;min-height:480px;overflow:visible}
+  .viewer-collection-panel{height:240px;min-height:240px;max-height:240px;flex-basis:240px}
+}
 </style>
 </head>
 <body>
@@ -301,6 +339,7 @@ html[data-theme="dark"] .layout-toggle[aria-pressed="true"] {
     </div>
     <div class="results-toolbar">
       <div id="results">Choose a media library folder.</div>
+      <button class="btn danger" id="deleteSelectedTrash" hidden disabled title="Permanently delete only the selected indexed Trash files. Original media is deleted without using the system Recycle Bin.">🗑 Delete selected</button>
       <button class="btn danger" id="deleteAllTrash" hidden disabled title="Permanently delete every indexed file in the in-gallery Trash. The operating system Recycle Bin is not used.">🗑 Delete all</button>
     </div>
     <div id="selectionBar" class="selection-toolbar" hidden>
@@ -378,6 +417,18 @@ html[data-theme="dark"] .layout-toggle[aria-pressed="true"] {
     <div class="dialog-actions" style="margin-top:22px">
       <button class="btn" id="deleteConfirmCancel">Cancel</button>
       <button class="btn danger" id="deleteConfirmAccept">Delete permanently</button>
+    </div>
+  </section>
+</dialog>
+<dialog id="collectionDialog" aria-labelledby="collectionDialogTitle" aria-describedby="collectionDialogMessage" class="gallery-action-dialog" style="width:min(470px,94vw)">
+  <section class="dialog-body">
+    <button type="button" class="close" id="collectionDialogX" aria-label="Close dialog" title="Cancel">×</button>
+    <h2 id="collectionDialogTitle" style="font-size:19px;margin:0 0 14px">Manage collection</h2>
+    <p id="collectionDialogMessage" class="help" style="margin:0 0 14px"></p>
+    <input id="collectionDialogInput" type="text" maxlength="80" autocomplete="off" placeholder="Name" hidden aria-label="Collection name">
+    <div class="dialog-actions" style="margin-top:20px">
+      <button type="button" class="btn" id="collectionDialogCancel">Cancel</button>
+      <button type="button" class="btn primary" id="collectionDialogAccept">Confirm</button>
     </div>
   </section>
 </dialog>
@@ -662,7 +713,7 @@ async function deleteAlbum(name){
   if(!albums.has(name)||!root)return;
   const count=albums.get(name).size;
   const q=`Delete album “${name}”${count?' ('+count+' items)':''}?\n\nOnly __gallery/data/albums/${name}.txt will be removed, NOT the original photos or videos.`;
-  if(!confirm(q))return;
+  if(!await galleryCollectionDialog({title:'Remove album?',message:q,action:'Remove album',danger:true}))return;
   try{
     await saveQueue.catch(()=>{});
 
@@ -1165,6 +1216,7 @@ function renderCards(){
   const trashAction=el('deleteAllTrash');
   trashAction.hidden=activeView.type!=='trash';
   trashAction.disabled=deletingMedia||scanInProgress||thumbResetting||![...trash].some(p=>byPath.has(p));
+  updateSelectedDeleteButton();
   el('loadMore').hidden=visibleCount>=filtered.length;el('welcome').hidden=!!root;updateSelectionUI();
 }
 // Classic-mode multi-selection. No source files change until a bulk action is explicitly clicked.
@@ -1447,7 +1499,16 @@ function runThumbWorkers(){while(thumbWorkers<2&&thumbJobs.length){const job=thu
   })
 }}
 function toggleFavorite(path){if(!root)return;if(favorites.has(path))favorites.delete(path);else{favorites.add(path);captureSignature(path)}saveFavorites();updateViewerFavorite();navButtonActive()}
-async function newAlbum(){if(!root)return null;let name=prompt('New album name:');if(name===null)return null;name=name.trim();if(!validAlbum(name)){toast('Invalid album name (max. 80 characters; no / \\ : * ? " < > |).');return null}if(albums.has(name)){toast('Album already exists.');return name}albums.set(name,new Set());renderAlbumList();saveAlbum(name);return name}
+async function newAlbum(){
+  if(!root)return null;
+  const answer=await galleryCollectionDialog({title:'New album',message:'Choose a name for the virtual album. Original media files are not copied.',input:true,action:'Create album'});
+  if(answer===null)return null;
+  const name=answer.trim();
+  if(!validAlbum(name)){toast('Invalid album name (max. 80 characters; no / \ : * ? " < > |).');return null}
+  if(albums.has(name)){toast('Album already exists.');return name}
+  albums.set(name,new Set());renderAlbumList();await saveAlbum(name);return name;
+}
+
 function toggleAlbumMembership(){if(!currentPath)return;const name=el('albumSelect').value;if(!albums.has(name)){toast('Choose an album first.');return}const xs=albums.get(name);if(xs.has(currentPath))xs.delete(currentPath);else{xs.add(currentPath);captureSignature(currentPath)}saveAlbum(name);renderAlbumList();el('albumSelect').value=name;updateMembership();if(activeView.type==='album')filterAndRender()}
 function updateAlbumButton(){const name=el('albumSelect').value;el('toggleAlbum').disabled=!name;el('toggleAlbum').textContent=name&&albums.get(name)?.has(currentPath)?'Remove from album':'Add to album'}
 function updateMembership(){el('membership').textContent='In albums: '+(albumMembers(currentPath).join(', ')||'none');updateAlbumButton()}
@@ -1595,15 +1656,15 @@ async function restoreCurrentFromTrash(){
 }
 // Native modal confirmation: Cancel, X, Escape, and clicking outside = NO.
 // All listeners are installed once and each invocation resolves exactly once.
-function confirmPermanentDeletion(paths){
+function confirmPermanentDeletion(paths,scope='all'){
   return new Promise(resolve=>{
     const dlg=el('deleteConfirmDialog');
     const count=paths.length;
-    el('deleteConfirmTitle').textContent=count===1?'Delete this file?':`Delete all ${count} files?`;
+    el('deleteConfirmTitle').textContent=count===1?'Delete this file?':`Delete ${count} files?`;
     el('deleteConfirmMessage').textContent=count===1?
       'Are you sure you want to permanently delete this file?\n'+paths[0]:
-      `Are you sure you want to permanently delete all ${count} files currently in Trash? This includes hidden items, regardless of active search and folder filters.`;
-    el('deleteConfirmAccept').textContent=count===1?'Delete file':`Delete all ${count} files`;
+      scope==='selected'?`Are you sure you want to permanently delete these ${count} selected files from Trash?`:`Are you sure you want to permanently delete all ${count} files currently in Trash? This includes hidden items, regardless of active search and folder filters.`;
+    el('deleteConfirmAccept').textContent=count===1?'Delete file':scope==='selected'?`Delete ${count} selected`:`Delete all ${count} files`;
     let finished=false;
     function finish(value){if(finished)return;finished=true;detach();dlg.close();resolve(value)}
     const yes=()=>finish(true),no=()=>finish(false);
@@ -1674,16 +1735,18 @@ async function permanentlyDeleteCurrent(){
 // Optional bulk deletion, ONLY for real, indexed files already in in-gallery Trash.
 // Never recurse into directories, and never delete source media for unselected libraries.
 // Original files bypass the operating system Recycle Bin; require explicit confirmation.
-async function deleteAllTrash(){
+async function deleteAllTrash(){return deleteTrashPaths(false)}
+async function deleteSelectedTrash(){return deleteTrashPaths(true)}
+async function deleteTrashPaths(onlySelected){
   if(!root||activeView.type!=='trash'||deletingMedia||scanInProgress||thumbResetting)return;
   const selectedRoot=root;
-  const candidates=[...trash].filter(p=>byPath.has(p)&&validPath(p));
+  const candidates=(onlySelected?[...selectedPaths]:[...trash]).filter(p=>trash.has(p)&&byPath.has(p)&&validPath(p));
   if(!candidates.length){toast('Trash contains no indexed files to delete.');return}
-  if(!await confirmPermanentDeletion(candidates))return;
+  if(!await confirmPermanentDeletion(candidates,onlySelected?'selected':'all'))return;
   deletingMedia=true;
-  const button=el('deleteAllTrash');
+  const button=el(onlySelected?'deleteSelectedTrash':'deleteAllTrash');
   const previousLabel=button.textContent;
-  button.disabled=true;
+  button.disabled=true;el('deleteAllTrash').disabled=true;el('deleteSelectedTrash').disabled=true;
   for(const id of ['rescan','rebuildThumbs','openFolder','openFolder2','recentFolders'])el(id).disabled=true;
   let removed=[],failed=[];
   try{
@@ -1773,6 +1836,27 @@ function editTags(){if(!currentPath)return;const arr=[...new Set(el('tagInput').
 function changeView(type){clearSelection();selectedTagKeys.clear();activeView={type};visibleCount=80;filterAndRender()}
 function debounce(fn,ms){let timer;return(...a)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...a),ms)}}
 // Browser-native hover tooltips are intentionally concise, with accessibility labels.
+function galleryCollectionDialog({title,message='',input=false,value='',action='Confirm',danger=false}={}){
+  return new Promise(resolve=>{
+    const dialog=el('collectionDialog'),field=el('collectionDialogInput'),accept=el('collectionDialogAccept');
+    el('collectionDialogTitle').textContent=title;
+    el('collectionDialogMessage').textContent=message;
+    field.hidden=!input;field.value=value;field.setAttribute('aria-label',input?'Collection name':'');
+    accept.textContent=action;
+    accept.className=danger?'btn danger':'btn primary';
+    let settled=false;
+    const finish=answer=>{if(settled)return;settled=true;cleanup();if(dialog.open)dialog.close();resolve(answer)};
+    const yes=()=>finish(input?field.value:true),no=()=>finish(input?null:false);
+    const cancel=e=>{e.preventDefault();no()};
+    const backdrop=e=>{if(e.target!==dialog)return;const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)no()};
+    const key=e=>{if(e.key==='Enter'&&input){e.preventDefault();yes()}};
+    const closed=()=>finish(input?null:false);
+    const cleanup=()=>{dialog.removeEventListener('cancel',cancel);dialog.removeEventListener('click',backdrop);dialog.removeEventListener('close',closed);field.removeEventListener('keydown',key)};
+    dialog.addEventListener('cancel',cancel);dialog.addEventListener('click',backdrop);dialog.addEventListener('close',closed);field.addEventListener('keydown',key);
+    el('collectionDialogX').onclick=no;el('collectionDialogCancel').onclick=no;accept.onclick=yes;
+    dialog.showModal();(input?field:el('collectionDialogCancel')).focus();if(input)field.select();
+  });
+}
 const TAG_CATALOG_NAME='tag-catalog.txt';
 let tagCatalog=new Set(), viewerCollectionMode='albums', viewerCollectionSelection='';
 
@@ -1782,6 +1866,13 @@ function updateResultsLine(){
   const prefix=activeView.type==='trash'?'Trash · ':(activeView.type==='tags'?'Tags '+selectedTagKeys.size+' · ':'');
   const node=el('results'); if(node) node.textContent=prefix+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
 }
+function updateSelectedDeleteButton(){
+  const button=el('deleteSelectedTrash');if(!button)return;
+  const count=[...selectedPaths].filter(p=>trash.has(p)&&byPath.has(p)).length;
+  button.hidden=activeView.type!=='trash';
+  button.disabled=!count||deletingMedia||scanInProgress||thumbResetting;
+  button.title=count?`Permanently delete ${count} selected file(s) from Trash after confirmation.`:'Select one or more Trash files to enable permanent deletion.';
+}
 function updateSelectionUI(){
   selectingMode=selectedPaths.size>0;
   document.body.classList.toggle('has-selection',selectingMode);
@@ -1789,6 +1880,7 @@ function updateSelectionUI(){
   document.querySelectorAll('#gallery .photo').forEach(card=>card.classList.toggle('is-selected',selectedPaths.has(card.dataset.path)));
   updateResultsLine();
   updateSelectionActionHints();
+  updateSelectedDeleteButton();
 }
 function clearSelection(){selectedPaths.clear();selectingMode=false;selectionAnchor=null;updateSelectionUI();}
 
@@ -1827,7 +1919,7 @@ function renderTagList(){
   for(const tag of matches.slice(0,500)){
     const btn=document.createElement('button'); btn.className='tag-chip'+(selectedTagKeys.has(tag.key)?' active':''); btn.dataset.tag=tag.key; btn.setAttribute('aria-pressed',String(selectedTagKeys.has(tag.key)));
     btn.title=selectedPaths.size?`Mark tag “${tag.label}” on the selected files.`:`${tag.label} — ${tag.count} file(s). Click to toggle this tag filter; multiple tags combine with AND.`;
-    const label=document.createElement('span'); label.textContent='#'+tag.label; const count=document.createElement('span'); count.className='tag-count'; count.textContent=tag.count.toLocaleString('en-US'); const action=document.createElement('span'); action.className='chip-action-label'; action.textContent='tag'; action.title='Mark tag';
+    const label=document.createElement('span'); label.textContent='#'+tag.label; const count=document.createElement('span'); count.className='tag-count'; count.textContent=tag.count.toLocaleString('en-US'); const action=document.createElement('span'); action.className='chip-action-label'; action.textContent='＋'; action.title='Mark tag';
     btn.append(label,count,action);
     btn.onclick=async ev=>{ ev.preventDefault(); if(selectedPaths.size){ el('bulkTag').value=tag.label; await bulkTagSelected(); return; } clearSelection(); el('folder').value=''; if(selectedTagKeys.has(tag.key)) selectedTagKeys.delete(tag.key); else selectedTagKeys.add(tag.key); activeView=selectedTagKeys.size?{type:'tags'}:{type:'all'}; visibleCount=80; filterAndRender(); };
     list.append(btn);
@@ -1848,8 +1940,33 @@ function renderAlbumList(){
   navButtonActive(); syncBulkAlbums();
 }
 function switchCollections(mode){ collectionMode=mode==='tags'?'tags':'albums'; el('showAlbums').classList.toggle('active',collectionMode==='albums'); el('showTags').classList.toggle('active',collectionMode==='tags'); el('showAlbums').setAttribute('aria-pressed',String(collectionMode==='albums')); el('showTags').setAttribute('aria-pressed',String(collectionMode==='tags')); el('collectionQuery').value=''; el('collectionQuery').placeholder=collectionMode==='albums'?'Search albums…':'Search tags…'; el('albumList').hidden=collectionMode!=='albums'; el('tagList').hidden=collectionMode!=='tags'; el('tagEmpty').hidden=true; renderAlbumList(); renderTagList(); }
-async function addCollection(){ if(!root)return; if(collectionMode==='albums'){ await newAlbum(); return; } let name=prompt('New tag name:'); if(name===null)return; name=cleanTag(name); if(!name){toast('Invalid tag name.'); return;} tagCatalog.add(name); await saveTagCatalog(); if(selectedPaths.size){ el('bulkTag').value=name; await bulkTagSelected(); } renderTagList(); toast(`Tag “${name}” created.`); }
-async function removeCollection(){ if(!root)return; if(collectionMode==='albums'){ if(activeView.type==='album') await deleteAlbum(activeView.name); return; } const targets=new Set(selectedTagKeys); if(!targets.size)return; const names=knownTags().filter(t=>targets.has(t.key)).map(t=>t.label); if(!confirm(`Remove ${names.length} selected tag(s) from all files and the tag list?\n\n${names.join(', ')}`))return; for(const key of targets) for(const name of [...tagCatalog]) if(name.toLocaleLowerCase('cs')===key) tagCatalog.delete(name); for(const [p,values] of [...tags]){ const kept=values.filter(x=>!targets.has(x.toLocaleLowerCase('cs'))); if(kept.length) tags.set(p,kept); else tags.delete(p); } selectedTagKeys.clear(); if(activeView.type==='tags') activeView={type:'all'}; await Promise.all([saveTags(),saveTagCatalog()]); renderTagList(); filterAndRender(); }
+async function addCollection(){
+  if(!root)return;
+  if(collectionMode==='albums'){await newAlbum();return}
+  const answer=await galleryCollectionDialog({title:'New tag',message:'Create a reusable tag name. You can assign it to photos later.',input:true,action:'Create tag'});
+  if(answer===null)return;
+  const name=cleanTag(answer);
+  if(!name){toast('Enter a valid tag name.');return}
+  if([...tagCatalog].some(t=>t.toLocaleLowerCase('cs')===name.toLocaleLowerCase('cs'))){toast('Tag already exists.');return}
+  tagCatalog.add(name);await saveTagCatalog();
+  if(selectedPaths.size){el('bulkTag').value=name;await bulkTagSelected()}
+  renderTagList();toast(`Tag “${name}” created.`);
+}
+async function removeCollection(){
+  if(!root)return;
+  if(collectionMode==='albums'){
+    if(activeView.type==='album')await deleteAlbum(activeView.name);
+    return;
+  }
+  const targets=new Set(selectedTagKeys);if(!targets.size)return;
+  const names=knownTags().filter(t=>targets.has(t.key)).map(t=>t.label);
+  const ok=await galleryCollectionDialog({title:`Remove ${names.length} tag${names.length===1?'':'s'}?`,message:`Remove from all media and the tag list? Original photos/videos stay on disk.\n\n${names.join(', ')}`,danger:true,action:'Remove tags'});
+  if(!ok)return;
+  for(const name of [...tagCatalog])if(targets.has(name.toLocaleLowerCase('cs')))tagCatalog.delete(name);
+  for(const [p,values] of [...tags]){const kept=values.filter(x=>!targets.has(x.toLocaleLowerCase('cs')));if(kept.length)tags.set(p,kept);else tags.delete(p)}
+  selectedTagKeys.clear();if(activeView.type==='tags')activeView={type:'all'};
+  await saveTags();renderTagList();filterAndRender();toast('Selected tags removed.');
+}
 function navButtonActive(){
   el('navAll').classList.toggle('active',activeView.type==='all');
   el('navFav').classList.toggle('active',activeView.type==='favorites');
@@ -1891,8 +2008,31 @@ function renderViewerCollections(){ const search=el('viewerCollectionQuery').val
   if(viewerCollectionMode==='albums'){ for(const [name,paths] of [...albums].sort(([a],[b])=>a.localeCompare(b,'cs'))){ if(!name.toLocaleLowerCase('cs').includes(search)) continue; const btn=document.createElement('button'); btn.className='nav-btn album-row'+(viewerCollectionSelection===name?' active':''); const has=currentPath&&paths.has(currentPath); const count=document.createElement('span'); count.className='tag-count'; count.textContent=paths.size.toLocaleString('en-US'); btn.title=has?'Click to remove the current file from this album.':'Click to add the current file to this album.'; const caption=document.createElement('span'); caption.className='album-title'; caption.textContent='▤ '+name; btn.append(caption,count); btn.onclick=()=>{ viewerCollectionSelection=name; el('viewerRemoveCollection').disabled=false; const xs=albums.get(name); if(currentPath){ if(xs.has(currentPath)) xs.delete(currentPath); else {xs.add(currentPath); captureSignature(currentPath);} saveAlbum(name); updateMembership?.(); filterAndRender(); renderViewerCollections(); renderAlbumList(); } }; albumHost.append(btn);} }
   else { for(const tag of knownTags()){ if(!tag.key.includes(search)) continue; const btn=document.createElement('button'); btn.className='tag-chip'+(viewerCollectionSelection===tag.label?' active':''); const has=currentPath&&(tags.get(currentPath)||[]).some(t=>t.toLocaleLowerCase('cs')===tag.key); btn.title=has?'Click to remove this tag from the current file.':'Click to add this tag to the current file.'; const label=document.createElement('span'); label.textContent='#'+tag.label; const count=document.createElement('span'); count.className='tag-count'; count.textContent=tag.count.toLocaleString('en-US'); btn.append(label,count); btn.onclick=()=>{ viewerCollectionSelection=tag.label; el('viewerRemoveCollection').disabled=false; if(currentPath){ const vals=tags.get(currentPath)||[]; if(has){ const kept=vals.filter(x=>x.toLocaleLowerCase('cs')!==tag.key); if(kept.length) tags.set(currentPath,kept); else tags.delete(currentPath); } else { tags.set(currentPath,[...vals,tag.label]); tagCatalog.add(tag.label); captureSignature(currentPath); } saveTags(); filterAndRender(); renderViewerCollections(); renderTagList(); } }; tagHost.append(btn);} }
   const empty=el('viewerCollectionEmpty'); const activeHost=viewerCollectionMode==='albums'?albumHost:tagHost; empty.hidden=activeHost.childElementCount>0; empty.textContent=viewerCollectionMode==='albums'?'No albums.':'No tags.'; }
-async function viewerNewCollection(){ if(viewerCollectionMode==='albums'){ const n=await newAlbum(); if(n){ viewerCollectionSelection=n; renderViewerCollections(); } return; } let name=prompt('New tag name:'); if(name===null) return; name=cleanTag(name); if(!name){ toast('Invalid tag name.'); return; } tagCatalog.add(name); if(currentPath){ const vals=tags.get(currentPath)||[]; if(!vals.some(t=>t.toLocaleLowerCase('cs')===name.toLocaleLowerCase('cs'))) tags.set(currentPath,[...vals,name]); } await Promise.all([saveTags(),saveTagCatalog()]); viewerCollectionSelection=name; renderViewerCollections(); renderTagList(); filterAndRender(); }
-async function viewerRemoveCollection(){ if(!viewerCollectionSelection) return; if(viewerCollectionMode==='albums'){ await deleteAlbum(viewerCollectionSelection); viewerCollectionSelection=''; renderViewerCollections(); return; } const key=viewerCollectionSelection.toLocaleLowerCase('cs'); if(!confirm(`Remove tag “${viewerCollectionSelection}” from all media and the tag list?`)) return; for(const name of [...tagCatalog]) if(name.toLocaleLowerCase('cs')===key) tagCatalog.delete(name); for(const [p,values] of [...tags]){ const kept=values.filter(x=>x.toLocaleLowerCase('cs')!==key); if(kept.length) tags.set(p,kept); else tags.delete(p); } await Promise.all([saveTags(),saveTagCatalog()]); viewerCollectionSelection=''; renderViewerCollections(); renderTagList(); filterAndRender(); }
+async function viewerNewCollection(){
+  if(viewerCollectionMode==='albums'){
+    const n=await newAlbum();if(n){viewerCollectionSelection=n;renderViewerCollections()}return;
+  }
+  const answer=await galleryCollectionDialog({title:'New tag',message:'Create a tag and assign it to this file.',input:true,action:'Create tag'});
+  if(answer===null)return;
+  const name=cleanTag(answer);if(!name){toast('Invalid tag name.');return}
+  tagCatalog.add(name);
+  if(currentPath){const vals=tags.get(currentPath)||[];if(!vals.some(t=>t.toLocaleLowerCase('cs')===name.toLocaleLowerCase('cs')))tags.set(currentPath,[...vals,name])}
+  await saveTags();viewerCollectionSelection=name;renderViewerCollections();renderTagList();filterAndRender();
+}
+async function viewerRemoveCollection(){
+  if(!viewerCollectionSelection)return;
+  if(viewerCollectionMode==='albums'){
+    await deleteAlbum(viewerCollectionSelection);
+    if(!albums.has(viewerCollectionSelection))viewerCollectionSelection='';
+    renderViewerCollections();return;
+  }
+  const key=viewerCollectionSelection.toLocaleLowerCase('cs');
+  const ok=await galleryCollectionDialog({title:'Remove tag?',message:`Remove “${viewerCollectionSelection}” from all media and the tag catalog? Original files stay on disk.`,action:'Remove tag',danger:true});
+  if(!ok)return;
+  for(const name of [...tagCatalog])if(name.toLocaleLowerCase('cs')===key)tagCatalog.delete(name);
+  for(const [p,values] of [...tags]){const kept=values.filter(x=>x.toLocaleLowerCase('cs')!==key);if(kept.length)tags.set(p,kept);else tags.delete(p)}
+  await saveTags();viewerCollectionSelection='';renderViewerCollections();renderTagList();filterAndRender();
+}
 function updateMembership(){}
 async function openViewer(path){ const item=byPath.get(path); if(!item)return; releaseViewerMedia(); const req=viewerNo; currentPath=path; viewerCollectionSelection=''; el('fileLabel').textContent=item.name; el('pathLabel').textContent=item.path; updateViewerFavorite(); updateViewerTrashButtons(); switchViewerCollections(viewerCollectionMode); if(!el('viewer').open) el('viewer').showModal(); try{ const file=await itemFile(item); if(viewerNo!==req||currentPath!==path||!el('viewer').open)return; bigURL=URL.createObjectURL(file); if(item.kind==='video'){ const v=el('bigVideo'); v.hidden=false; v.src=bigURL; v.load(); } else { const img=el('bigImage'); img.hidden=false; img.src=bigURL; } }catch(e){ toast('Could not open file; try refreshing the index: '+e.message) } }
 function closeViewer(){ releaseViewerMedia(); currentPath=null; if(el('viewer').open) el('viewer').close(); }
@@ -2024,7 +2164,7 @@ el('gallery').addEventListener('pointerup',cancelLongPress);
 el('gallery').addEventListener('pointercancel',cancelLongPress);
 el('gallery').addEventListener('contextmenu',e=>{if(selectingMode&&e.target.closest('.photo'))e.preventDefault()});
 el('openFolder').onclick=chooseFolder;el('openFolder2').onclick=chooseFolder;
-el('recentFolders').onchange=async e=>{ const entry=recentLibraries.find(x=>x.id===e.target.value); if(entry)await openRemembered(entry); else renderRecents(); };
+el('recentFolders').onchange=async e=>{ const entry=recentLibraries.find(x=>x.id===e.target.value); if(entry)await openRemembered(entry); else { await chooseFolder(); renderRecents(); } };
 el('forget').onclick=forgetLibraries;
 el('rescan').onclick=scan;
 el('navAll').onclick=()=>changeView('all'); el('navFav').onclick=e=>{ if(e.target.closest('.row-plus')) return; changeView('favorites'); }; el('navTrash').onclick=e=>{ if(e.target.closest('.row-plus')) return; changeView('trash'); };
@@ -2043,7 +2183,7 @@ el('viewerCollectionQuery').addEventListener('input',debounce(renderViewerCollec
 el('viewerNewCollection').onclick=()=>void viewerNewCollection(); el('viewerRemoveCollection').onclick=()=>void viewerRemoveCollection();
 el('showInFolder').onclick=showInFolder; el('copyLocation').onclick=()=>void copyCurrentLocation();
 el('moveToTrash').onclick=()=>void moveCurrentToTrash(); el('restoreTrash').onclick=()=>void restoreCurrentFromTrash();
-el('deletePermanently').onclick=()=>void permanentlyDeleteCurrent(); el('deleteAllTrash').onclick=()=>void deleteAllTrash();
+el('deletePermanently').onclick=()=>void permanentlyDeleteCurrent(); el('deleteAllTrash').onclick=()=>void deleteAllTrash();el('deleteSelectedTrash').onclick=()=>void deleteSelectedTrash();
 el('closeViewer').onclick=closeViewer; el('viewer').addEventListener('cancel',e=>{e.preventDefault(); closeViewer()});
 const mediaDialog=el('viewer'), mediaStage=el('viewerStage');
 let dismissPointerStartedOnBackground=false;
