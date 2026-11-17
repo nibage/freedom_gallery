@@ -166,3 +166,13 @@ This is a UI-only change. Existing indexes, thumbnail caches, favorites, albums,
 - The full-screen viewer keeps a fixed window size. Its albums/tags list expands to consume all available space between search and the bottom actions and scrolls without moving those actions. Images remain uncropped, with a small dark band above wide media.
 
 Existing indexes, thumbnails, and metadata files need no migration.
+
+
+## v7.3.3 — StackEdit Wiki-inspired color refresh
+
+- **Dark theme:** charcoal `#1b1e24` for the main background/header and `#171a20` for the sidebar, using warm orange `#f6a622` for primary actions, focus rings, and hover accents. This matches the supplied Local StackEdit Wiki dark screenshot.
+- **Light theme:** changed the bright red header to a calmer burgundy `#6b2638`, with a pale contrasting Open library button.
+- **Favicon:** an embedded SVG with a dark charcoal tile, orange outline/sun, and white mountain motif. No additional file, server, or network request is needed.
+- **Unchanged:** green selection outlines for tags and Instagram mode, saved theme preference, photos, indexes, favorites, tags, albums, cache, and delete behavior.
+
+Only `__gallery/index.html` needs to be replaced when updating from v7.3.2. No reindex or thumbnail rebuild is required.

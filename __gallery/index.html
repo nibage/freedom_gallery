@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.3.2</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%2395172c%22%2F%3E%0A%3Crect%20x%3D%2211%22%20y%3D%2215%22%20width%3D%2237%22%20height%3D%2234%22%20rx%3D%225%22%20fill%3D%22%23f8f7f2%22%20opacity%3D%22.72%22%2F%3E%0A%3Crect%20x%3D%2216%22%20y%3D%2211%22%20width%3D%2239%22%20height%3D%2238%22%20rx%3D%226%22%20fill%3D%22%23fffdf7%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2222%22%20r%3D%226%22%20fill%3D%22%23f0af36%22%2F%3E%0A%3Cpath%20d%3D%22M20%2040%2030%2028%2037%2035%2043%2030%2051%2041v3H20z%22%20fill%3D%22%234e9f69%22%2F%3E%0A%3Cpath%20d%3D%22M20%2040%2029%2033%2038%2041H20z%22%20fill%3D%22%23246d50%22%2F%3E%0A%3C%2Fsvg%3E">
+<title>Local Media Gallery v7.3.3</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%231b1e24%22%2F%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2218%22%20width%3D%2237%22%20height%3D%2232%22%20rx%3D%225%22%20fill%3D%22%2330353d%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%20opacity%3D%220.83%22%2F%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2212%22%20width%3D%2238%22%20height%3D%2237%22%20rx%3D%226%22%20fill%3D%22%23262a31%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2223%22%20r%3D%225%22%20fill%3D%22%23f6a622%22%2F%3E%0A%3Cpath%20d%3D%22M21%2043%2030%2030%2037%2037%2043%2032%2051%2043Z%22%20fill%3D%22%23f3f4f5%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
   [hidden] {display:none!important}
@@ -346,7 +346,7 @@ body.has-selection .tag-chip:hover .chip-action-label{border:1px solid var(--ok)
 }
 
 
-/* v7.3.2 UI refinements: caption selection and badge alignment */
+/* v7.3.2: caption selection and category badges */
 #gallery .photo .meta{cursor:pointer;user-select:none;-webkit-user-select:none}
 #gallery .photo .meta:hover{background:var(--control-hover);color:var(--text)}
 #gallery .photo .meta:focus-visible{outline:2px solid var(--ok);outline-offset:-2px}
@@ -354,6 +354,8 @@ body.has-selection .tag-chip:hover .chip-action-label{border:1px solid var(--ok)
 #albumList .album-title,#viewerAlbumList .album-title{display:block;min-width:0;flex:1 1 auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #albumList .tag-count,#viewerAlbumList .tag-count{flex:0 0 auto;margin-left:auto!important;margin-right:0!important;font-variant-numeric:tabular-nums}
 #albumList .row-plus{position:absolute;right:7px;top:50%;transform:translateY(-50%);z-index:3}
+/* No scrollbar changes the right-hand controls: keep the viewer footprint fixed.
+   The collection list occupies all space between search and bottom actions. */
 #viewer{height:min(810px,94dvh)!important}
 #viewer .viewer{height:100%!important;max-height:100%!important;min-height:0;overflow:hidden;grid-template-columns:minmax(0,1fr) 285px}
 #viewer .details{height:100%!important;min-height:0!important;max-height:100%!important;overflow:hidden!important;display:flex;flex-direction:column}
@@ -366,6 +368,7 @@ body.has-selection .tag-chip:hover .chip-action-label{border:1px solid var(--ok)
 #viewer .collection-scroll.compact{flex:1 1 0!important;height:auto!important;max-height:none!important;min-height:0!important;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:stable}
 #viewer #viewerTagList{margin-top:0!important}
 #viewer .viewer-actions{flex:0 0 auto;margin-top:0!important;padding-top:13px}
+/* Minimize the black band *above* wide images. Do not crop photos or change window size. */
 #viewer .stage{min-height:0!important;min-width:0!important;height:100%;display:flex;align-items:flex-start;justify-content:center;padding:clamp(10px,1.7dvh,20px) 0 0}
 #viewer .stage #bigImage,#viewer .stage #bigVideo{flex:0 1 auto;max-width:100%;max-height:calc(100% - 10px)!important;object-fit:contain}
 #viewer .stage #bigImage{width:auto;height:auto}
@@ -378,6 +381,86 @@ body.has-selection .tag-chip:hover .chip-action-label{border:1px solid var(--ok)
   #viewer .viewer-collection-panel{min-height:0!important}
   #viewer .stage{min-height:0!important}
 }
+
+
+/* v7.3.3 — match the StackEdit Wiki dark charcoal and orange accent.
+   Green selected-item/Instagram outlines are preserved. */
+html[data-theme="dark"] {
+  color-scheme:dark;
+  --bg:#1b1e24;
+  --panel:#1b1e24;
+  --aside:#171a20;
+  --line:#30353d;
+  --muted:#aeb4bc;
+  --accent:#f6a622;
+  --text:#f3f4f5;
+  --control:#24272f;
+  --control-border:#464b54;
+  --control-hover:#30353d;
+  --card:#24272f;
+  --thumb-bg:#292d35;
+  --active:#2c3038;
+  --selection-bg:#3c3121;
+  --selection-color:#f6a622;
+  --dialog:#1b1e24;
+  --ok:#67b879;
+  --danger:#c85b6c;
+}
+html[data-theme="dark"] .top {
+  background:#1b1e24;
+  border-bottom-color:#b98122;
+}
+html[data-theme="dark"] .btn.primary,
+html[data-theme="dark"] #openFolder,
+html[data-theme="dark"] #openFolder2 {
+  background:#f6a622;
+  border-color:#f6a622;
+  color:#1b1e24;
+}
+html[data-theme="dark"] .btn.primary:hover,
+html[data-theme="dark"] #openFolder:hover,
+html[data-theme="dark"] #openFolder2:hover {
+  background:#ffb73d;
+  border-color:#ffb73d;
+  color:#1b1e24;
+}
+html[data-theme="dark"] aside,
+html[data-theme="dark"] .aside-bottom-toolbar {background:#171a20}
+html[data-theme="dark"] .nav-btn:hover:not(.active),
+html[data-theme="dark"] .collection-action:hover:not(:disabled) {
+  background:#292d35;
+  color:#f6a622;
+}
+html[data-theme="dark"] .tag-count {background:#30353d;color:#c9cdd4}
+html[data-theme="dark"] input:focus,
+html[data-theme="dark"] select:focus,
+html[data-theme="dark"] input:focus-visible,
+html[data-theme="dark"] select:focus-visible {
+  border-color:#f6a622;
+  outline-color:#f6a622;
+}
+html[data-theme="dark"] .btn:focus-visible,
+html[data-theme="dark"] .collection-action:focus-visible,
+html[data-theme="dark"] .close:focus-visible {outline:2px solid #f6a622;outline-offset:2px}
+html[data-theme="dark"] .video-tile {background:linear-gradient(135deg,#343941,#1b1e24)}
+html[data-theme="dark"] .empty,
+html[data-theme="dark"] #toast {background:#24272f;border-color:#464b54}
+html[data-theme="dark"] ::selection {background:#f6a62255;color:#fff}
+
+/* Muted burgundy replaces the strong bright-red light-mode banner. */
+html[data-theme="light"] .top {background:#6b2638;border-bottom:1px solid #5b1f30}
+html[data-theme="light"] .top .small {color:#f1dfe4}
+html[data-theme="light"] .top #openFolder {
+  background:#f4e9ed;
+  border-color:#f4e9ed;
+  color:#5e2132;
+}
+html[data-theme="light"] .top #openFolder:hover {
+  background:#fff7f9;
+  border-color:#fff7f9;
+  color:#5e2132;
+}
+
 </style>
 </head>
 <body>
@@ -1302,6 +1385,7 @@ function renderCards(){
     meta.setAttribute('role','button');meta.setAttribute('tabindex','0');meta.setAttribute('aria-label','Select '+item.name);meta.title='Select this photo (Shift-click for range)';
     const selectFromCaption=e=>{
       e.preventDefault();e.stopPropagation();
+      // The caption always selects; the picture itself still opens the viewer.
       activateCard(item.path,{preventDefault:()=>{},stopPropagation:()=>{},ctrlKey:!e.shiftKey,metaKey:!!e.metaKey,shiftKey:!!e.shiftKey});
     };
     meta.onclick=selectFromCaption;
@@ -1349,7 +1433,8 @@ function syncBulkAlbums(){
 }
 function activateCard(path,event){
   if(suppressCardClick){event.preventDefault();event.stopPropagation();return}
-  // In Classic mode, plain picture click opens even if items are selected.
+  // Classic mode: clicking the picture always opens it; only its caption or
+  // modifier-click selects. Instagram has no caption, so selecting mode stays available.
   const selectOnPlainClick=selectingMode&&document.body.classList.contains('instagram-mode');
   if(!(selectOnPlainClick||event.ctrlKey||event.metaKey||event.shiftKey)){
     void openViewer(path);return;
@@ -1484,7 +1569,7 @@ async function bulkTrashSelected(){
   const restoring=activeView.type==='trash';
   const targets=[...selectedPaths].filter(p=>byPath.has(p)&&(restoring?trash.has(p):!trash.has(p)));
   if(!targets.length)return;
-  /* Reversible in-gallery Trash needs no confirmation. */
+  // Moving to the in-gallery Trash is reversible and needs no confirmation.
   if(restoring)for(const p of targets)trash.delete(p);else for(const p of targets)trash.add(p);
   await saveTrash();clearSelection();renderTagList();filterAndRender();toast(restoring?`Restored ${targets.length} files.`:`Moved ${targets.length} files to in-gallery Trash; originals remain on disk.`);
 }
@@ -2088,7 +2173,7 @@ function syncBulkAlbums(){ const box=el('bulkAlbum'); if(!box) return; const old
 async function bulkFavoriteSelected(){ if(!root||!selectedPaths.size)return; const items=[...selectedPaths].filter(p=>byPath.has(p)&&!trash.has(p)); for(const p of items){favorites.add(p);captureSignature(p)} await saveFavorites(); renderCards(); toast(`Added ${items.length} files to favorites.`); }
 async function bulkAlbumSelected(){ const name=el('bulkAlbum').value; if(!root||!selectedPaths.size||!albums.has(name))return; const members=albums.get(name); let added=0; for(const p of selectedPaths) if(byPath.has(p)&&!trash.has(p)&&!members.has(p)){members.add(p);captureSignature(p);added++} await saveAlbum(name); renderAlbumList(); renderCards(); toast(`Added ${added} files to album “${name}”.`); }
 async function bulkTagSelected(){ if(!root||!selectedPaths.size)return; const name=cleanTag(el('bulkTag').value); if(!name){toast('Enter a valid tag name first.');return} tagCatalog.add(name); let changed=0; for(const path of selectedPaths){ if(!byPath.has(path)||trash.has(path))continue; const values=tags.get(path)||[]; if(values.some(t=>t.toLocaleLowerCase('cs')===name.toLocaleLowerCase('cs')))continue; tags.set(path,[...values,name]); captureSignature(path); changed++; } await saveTags(); renderTagList(); filterAndRender(); toast(`Tag “${name}” applied to ${changed} selected files.`); }
-async function bulkTrashSelected(){ if(!root||!selectedPaths.size||deletingMedia)return; const restoring=activeView.type==='trash'; const targets=[...selectedPaths].filter(p=>byPath.has(p)&&(restoring?trash.has(p):!trash.has(p))); if(!targets.length)return; /* Reversible in-gallery Trash needs no confirmation. */ if(restoring) for(const p of targets) trash.delete(p); else for(const p of targets) trash.add(p); await saveTrash(); clearSelection(); renderTagList(); filterAndRender(); toast(restoring?`Restored ${targets.length} files.`:`Moved ${targets.length} files to in-gallery Trash; originals remain on disk.`); }
+async function bulkTrashSelected(){ if(!root||!selectedPaths.size||deletingMedia)return; const restoring=activeView.type==='trash'; const targets=[...selectedPaths].filter(p=>byPath.has(p)&&(restoring?trash.has(p):!trash.has(p))); if(!targets.length)return; /* In-gallery Trash is reversible: no confirmation. */ if(restoring) for(const p of targets) trash.delete(p); else for(const p of targets) trash.add(p); await saveTrash(); clearSelection(); renderTagList(); filterAndRender(); toast(restoring?`Restored ${targets.length} files.`:`Moved ${targets.length} files to in-gallery Trash; originals remain on disk.`); }
 
 function updateViewerFavorite(){
   if(!currentPath)return;
@@ -2184,8 +2269,9 @@ function actionDescription(key,mode){
   const album=key.slice(6);
   return mode==='remove'?`Remove from album “${album}”`:`Add to album “${album}”`;
 }
-
 function tagAssignmentMode(key){
+  // If filtering by this tag, all displayed photos have it; otherwise act on
+  // whether each selected item is tagged, just like an already-filled album.
   if(activeView.type==='tags'&&selectedTagKeys.has(key))return 'remove';
   const items=[...selectedPaths].filter(p=>byPath.has(p));
   return items.length&&items.every(p=>(tags.get(p)||[]).some(t=>t.toLocaleLowerCase('cs')===key))?'remove':'add';
@@ -2252,7 +2338,7 @@ async function applySelectedCategory(key){
     }
     await saveFavorites();
   } else if(key==='trash'){
-    /* Reversible in-gallery Trash needs no confirmation. */
+    // In-gallery Trash is reversible; only permanent deletion asks for confirmation.
     for(const path of items){
       if(mode==='remove')trash.delete(path);
       else trash.add(path);
@@ -2345,7 +2431,6 @@ document.addEventListener('keydown',e=>{
       return;
     }
   }
-
   if(el('viewer').open){ if(['INPUT','TEXTAREA','SELECT','VIDEO'].includes(document.activeElement?.tagName)) return; if(e.key==='ArrowLeft') moveViewer(-1); else if(e.key==='ArrowRight') moveViewer(1); else if(e.key.toLowerCase()==='f'&&currentPath){ toggleFavorite(currentPath); if(activeView.type==='favorites')filterAndRender(); else renderCards(); updateViewerFavorite(); } return; }
   if(e.key==='Escape' && selectedPaths.size){ clearSelection(); return; }
   if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){ e.preventDefault(); el('query').focus(); }
@@ -2364,6 +2449,8 @@ function selectionRect(x1,y1,x2,y2){
 function startMainMarquee(event){
   if(event.button!==0||event.pointerType!=='mouse'||!root||!filtered.length||el('viewer').open)return;
   if(event.target.closest('input,select,textarea,button,a,label,.top,aside,.filters,.results-toolbar button,.selection-toolbar,#loadMore,dialog'))return;
+  // Permit starting in the entire gallery column, including blank space below
+  // <main> (which otherwise is not a hit-testable DOM child when the page is short).
   const main=el('gallery').closest('main'),bounds=main.getBoundingClientRect();
   if(event.clientX<bounds.left||event.clientX>bounds.right||event.clientY<bounds.top)return;
   viewportMarquee={pointerId:event.pointerId,x:event.clientX,y:event.clientY,initial:new Set(selectedPaths),additive:event.ctrlKey||event.metaKey,dragging:false,overlay:null};
@@ -2403,6 +2490,8 @@ function finishMainMarquee(event){
   }
   viewportMarquee=null;
 }
+// Watch the whole document so a marquee can start below the last photo and
+// finish above the first, even when the mouse leaves the <main> element.
 document.addEventListener('pointerdown',startMainMarquee);
 document.addEventListener('pointermove',updateMainMarquee);
 document.addEventListener('pointerup',finishMainMarquee);
