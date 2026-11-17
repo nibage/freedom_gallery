@@ -6,7 +6,7 @@ A **portable, offline photo and video gallery** in one `__gallery/index.html` fi
 
 ## Try the included demo after cloning
 
-This repository includes a **`demo-gallery/`** folder alongside `__gallery/`, containing 16 original SVG sample illustrations, pre-populated favorites, dozens of tags, and 18 virtual albums for testing long lists. No extra downloads needed.
+This repository includes a **`demo-gallery/`** folder alongside `__gallery/`, containing 16 original SVG sample illustrations, pre-populated favorites, dozens of tags, and 18 virtual albums to exercise scrolling and long names. No extra downloads needed.
 
 1. Clone or download this repository.
 2. Open `__gallery/index.html` in **Chrome or Edge** (double-click it, no server).
@@ -33,7 +33,7 @@ Pictures/
         ├── files.txt      # relative path inventory
         ├── favorites.txt  # one path per line
         ├── tags.tsv       # path<TAB>tag1, tag2
-        ├── tag-catalog.txt # reusable tags, including unassigned tags
+        ├── tag-catalog.txt # reusable tag names, including unused tags
         ├── trash.txt      # reversible in-gallery trash list
         ├── media-info.tsv # signatures for move/rename suggestions
         ├── thumbs.tsv     # WebP thumbnail manifest
@@ -63,10 +63,12 @@ If a remembered folder is moved, deleted, disconnected, or access is revoked, au
 | **Remove thumbs** | Reset the derived WebP cache. Use it if previews look broken or dated; photos, tags, albums, and file index remain unchanged. |
 | **Theme: System / Light / Dark** | Follow your OS preference, or override it independently for this HTML gallery. |
 | **Classic / Instagram** | Switch between labeled cards and a gapless square-tile grid. The selected layout is remembered. |
-| **Folder / type filters** | Search inside a chosen folder and its subfolders, photos only, videos only, or all media. |
-| **Albums / Tags** | Switch the sidebar between searchable album names and tag chips. Selected tags have a **green outline**; selecting several tags uses **AND**, matching only files containing all of them. |
-| **+ New / − Remove** | Create or delete virtual albums or reusable tags, even before assigning tags to photos. Removing a tag clears its assignments without deleting media. Original files are never deleted by these collection actions. |
-| **All media / Favorites / Trash** | Filter favorite files or view media hidden in the reversible in-gallery Trash. |
+| **Folder / type filters** | Select a folder and subfolders, media type, and normal filename/tag search. |
+| **Fix folder** | Checked **by default**. Keep the chosen folder when browsing albums and tags in AND mode; unchecked means album/tag filters can search globally. Does not change the selected folder value. |
+| **AND / OR** | **AND** (default): files must belong to the chosen album **and every selected tag**, also matching the selected folder when Fix folder is checked. **OR**: files may belong to the album **or any selected tag** across the *whole* library, temporarily ignoring the folder. The folder returns when you clear collection filters or switch back to AND. |
+| **Albums / Tags** | Choose an album and one or more tags together (switch tabs to access each type). Green outlines show selected tags; click a selected album/tag again to unselect it and return toward All media. |
+| **+ New / − Remove** | Create or delete a virtual album; in Tags mode, create reusable tags (including unassigned tags) or remove selected tags from all media. Original files are never deleted by these collection actions. |
+| **All media / Favorites / Trash** | Filter all available media, favorites, or reversible Trash; each sidebar item displays its indexed file count. |
 | **Show folder** | Show all indexed media in the current file's folder and its subfolders **inside the gallery**. It does not launch Explorer or Finder. |
 | **Copy path** | Copy the complete path if known/inferred; otherwise enter the library root path once. |
 
@@ -76,18 +78,25 @@ All main controls and viewer actions include mouse-hover `title` tooltips.
 
 - **Ctrl+click / Cmd+click** toggles one image or video without opening it.
 - **Shift+click** selects an inclusive range between the selection anchor and clicked tile (only among currently loaded/visible cards).
-- **Mouse drag** creates a selection rectangle over displayed cards, even when started from the empty area above or below the grid; the selection persists after releasing the mouse button.
+- **Mouse drag** creates a selection rectangle over displayed cards, including when it starts in blank gallery space above or below the photo grid (even outside the rendered grid element). The selection persists after releasing the mouse button.
 - **Long-press** a thumbnail (mouse, touch, or stylus) to begin selection. You can then slide across more thumbnails to add them, where supported by the browser.
 
-Selection count appears inline with results (`| N selected`). Hover Favorites, Trash, or an album in the sidebar for its **+** action; hover a tag for **Mark tag**. Click to apply the selected action. Esc or a click outside the selection clears it. No separate Select button or selection toolbar is needed. These bulk actions never physically delete originals.
+In **Classic mode**, click the filename bar to select a file (Shift+click for a range); clicking the picture itself always opens it. In **Instagram mode**, Ctrl/Cmd-click, Shift-click, long press, or dragging select files.
+
+The results count sits next to the **freedom_gallery** title in the top bar, freeing space above the photos. When items are selected it also shows `| N selected`. Hover over Favorites, Trash, or an album in the sidebar to reveal **+** for adding the selection. A successful operation displays **✓**. If **every selected item already belongs to that category**, its hover action becomes **−** to remove membership (or restore from Trash), even when another category is currently viewed. Hover over a tag to see a green **+** to assign it, or **−** if all selected files already have that tag; clicking adds/removes the tag **only for the selected files**. These actions work in Classic **and** Instagram mode. The selection is temporary, clears with **Esc** or by clicking outside, and never physically deletes originals.
 
 ### Albums and tags
 
-Within a photo viewer, actions are ordered Favorites, Trash, a compact searchable Albums/Tags panel with clickable memberships and + New / − Remove, then Show all in folder and Copy full path. Changes save when clicked; no separate Save tags action.
+Inside the full-screen viewer, buttons appear vertically as **Favorites** and **Trash**, followed by a compact **Albums / Tags** switch with **+ New**, **− Remove**, search, and clickable memberships. Changes are saved on click; no separate Save tags button is needed. The bottom-aligned **Show folder** and **Copy path** buttons stay fixed; the album/tag list expands to use all available space between search and those controls, scrolling as needed. The photo viewer dimensions remain fixed across different media sizes and collection counts, and images are top-aligned to minimize the dark band above wide photos without cropping.
 
-Albums are text files of relative paths: `data/albums/<album name>.txt`. A file can belong to many albums without being copied. Tags live together in `data/tags.tsv` as tab-separated rows; reusable names (including unused tags) live in `data/tag-catalog.txt`. No database and no per-tag folders are created. The tags sidebar lists at most 500 matching tags at a time; search narrows the list. Long album names are ellipsized, with their complete names in hover help. Both lists are scrollable.
 
-Normal search and folder selection combine with **AND**. Choosing an album or any tag resets the folder filter to **All folders**, so the collection first shows media across the library. You can then select a folder to narrow that collection.
+**Trash counts:** moving a photo into the gallery Trash does not remove its album memberships or tag assignments. Album and tag counters exclude trashed items, so they decrease while the file is hidden and return to their previous values when restored. Permanent deletion, in contrast, removes that file's saved associations.
+
+Albums are text files of relative paths: `data/albums/<album name>.txt`. A file can belong to many albums without being copied. Tags live together in `data/tags.tsv` as tab-separated rows; reusable tag names, even when not assigned to photos, are stored in `data/tag-catalog.txt`. No database and no per-tag folders are created. The tags sidebar lists at most 500 matching tags at a time; search narrows the list. Long album names are ellipsized, with their complete names in hover help. Both lists are scrollable.
+
+Normal filename search and media type continue to narrow the results. Album and tag filters now coexist rather than clearing one another when switching the Albums/Tags tab.
+
+**Example:** select `Landscapes`, keep **Fix folder** checked, then choose the album `Best of demo` and tags `landscape` + `demo`. With **AND**, only Landscapes photos matching the album *and both tags* appear. Switch to **OR** and the gallery shows every photo in the album *or with either tag*, globally, without modifying the remembered `Landscapes` dropdown selection. Switching back to **AND** restores the folder restriction. If **Fix folder** is unchecked, album/tag combinations operate globally in either mode; normal All media uses the selected folder again. Clicking the active album unselects it, returning to All media when no tags remain selected.
 
 ### Index cleanup and moving between computers
 
@@ -99,7 +108,7 @@ The file index and album/tag paths are **relative to the selected library root**
 
 ## Deletion warning
 
-**Move to Trash** (also the `Delete` keyboard shortcut) adds a path to `data/trash.txt` and hides it from normal views; the original file **stays where it is** and can be restored. This reversible action does not require a confirmation dialog.
+**Move to Trash** (including the keyboard `Delete` shortcut) adds a path to `data/trash.txt` and hides it from normal views; the original file **stays where it is** and can be restored. No confirmation is required because this is reversible.
 
 **Delete permanently** and **Delete all** physically remove original files from disk after a confirmation dialog. The dialog closes harmlessly on Cancel, ×, Esc, or click outside. Permanent deletion **bypasses the operating-system Recycle Bin/Trash and cannot be undone**. There is no automatic backup. Test it on disposable files first.
 
@@ -107,10 +116,10 @@ The file index and album/tag paths are **relative to the selected library root**
 
 - `←` / `→` — previous / next item in viewer (except when video controls have focus)
 - `F` — toggle favorite for the currently open item
-- `Esc` — close viewer / confirmation, or clear temporary selection
+- `Esc` — close viewer / confirmation, or clear multi-selection
 - `/` — focus media search
-- `Delete` — move the currently opened photo or selected files to **in-gallery Trash**, without confirmation; never permanently delete them
-- Classic view: click a filename bar to select a file; click its image to open it (even while other files are selected)
+- `Delete` — move the open image or selected images to the **in-gallery Trash** without confirmation. **It never permanently deletes**; when viewing Trash, use the explicit, confirmed Delete selected / Delete all buttons.
+- Classic view: click filename bar — select media; click image — open the viewer
 - `Ctrl`/`Cmd`+click — toggle item selection
 - `Shift`+click — select an inclusive range
 - Drag / long-press — select a group of visible cards
@@ -119,25 +128,25 @@ The file index and album/tag paths are **relative to the selected library root**
 
 To upgrade from v6.10 (or an earlier version using `__gallery/data/`), **replace only `__gallery/index.html`**. Existing text files and high-resolution thumbnails are preserved. No legacy metadata migration or separate server is required.
 
-The included `.gitignore` intentionally only tracks the app, README, and **bundled demo** including its reusable tag catalog. Do **not** publish your personal photos or the generated `__gallery/data/` from your real library. This repository is distributed under the license published in the GitHub repository (see `LICENSE`).
+The included `.gitignore` intentionally only tracks the app, README, and **bundled demo** including its tag catalog. Do **not** publish your personal photos or the generated `__gallery/data/` from your real library. This repository is distributed under the license published in the GitHub repository (see `LICENSE`).
 
-## v7.1 interface refresh
+### v7.1 UI changes
 
-The color schemes reflect the Local StackEdit Wiki screenshots: a burgundy-red header in Light and gold accents in Dark, with green outlines for selected tags and Instagram mode. Rebuild index and Rebuild thumbnails share a bottom-left sidebar toolbar, while top navigation is right-aligned. The viewer has inline collection controls instead of Save tags, and multi-selection uses sidebar hover actions instead of a selection bar.
+Light uses a burgundy/red header and Dark uses a gold accent, similar to the Local StackEdit Wiki reference. Rebuild index and Remove thumbs appear side-by-side at the bottom of the sidebar. The Instagram layout and selected tags use green outlines. Top-level controls align to the right. The viewer has a compact Albums/Tags panel, and selection actions live in the sidebar rather than in a separate selection toolbar.
 
-### v7.2 usability update
+### v7.2 usability improvements
 
-- Neutral selected button backgrounds in Light mode, retaining green outlines; narrower Albums / Tags switch.
-- Counters for All media, Favorites, and Trash.
-- Context-sensitive + / ✓ / − actions for bulk adding and removing favorites, Trash items and album members.
-- Marquee selection persists after mouse release and starts from empty space above or below media, in Classic and Instagram modes.
-- Bottom-left maintenance buttons are equal width: Rebuild index and Remove thumbs.
-- Viewer buttons are vertically stacked: Favorites, Trash; then bottom-aligned Show folder and Copy path below five lines of collection space.
+- Neutral gray selected tab backgrounds in Light mode, keeping the green selection border. The Albums / Tags switch is narrower.
+- All media and Favorites now show counts like Trash.
+- Sidebar bulk actions show **+** to add, **✓** after success, or **−** to remove items from the active collection (including restoring selected Trash items).
+- Desktop drag selection works from blank areas above and below the grid and **stays selected on mouse-button release**; selection actions remain available in Instagram mode.
+- Sidebar maintenance buttons have equal compact sizing: **Rebuild index** and **Remove thumbs**.
+- The viewer has vertically stacked **Favorites**, **Trash**, **Show folder**, and **Copy path** buttons. The last two are kept below a reserved height for albums and tags.
 
 
 ## v7.3 — UI and Trash improvements
 
-- In **Trash**, **Delete selected** sits immediately left of **Delete all**. It is disabled until one or more Trash items are selected; it permanently deletes **only those selected Trash files**, after explicit confirmation. Both actions bypass the operating system Trash and cannot be undone.
+- In **Trash**, **Delete selected** sits immediately left of **Delete all**. It is disabled until one or more Trash items are selected; it permanently deletes **only those selected Trash files**, after the same explicit confirmation used by Delete all. Both actions bypass the operating system Trash and cannot be undone.
 - The maintenance toolbar stays at a stable bottom-left sidebar location when switching Classic/Instagram mode; hovering over Favorites, Trash or albums overlays the `+`/`−` controls instead of shifting the counts.
 - Choosing **Select library…** from Recent libraries launches the folder picker again, just like Open library.
 - Tags now show a green `+` on hover for assigning the tag to the current selection.
@@ -146,33 +155,48 @@ The color schemes reflect the Local StackEdit Wiki screenshots: a burgundy-red h
 
 ### Safety
 
-`Delete selected` is only available inside the in-gallery Trash. **Move to Trash** merely hides originals, but **Delete selected**, **Delete all**, and **Delete permanently** remove actual files from disk. Test permanent deletion with disposable media before using it on your archive.
-
-## v7.3.1 — Embedded favicon & steady sidebar controls
-
-- A vector photo-gallery favicon is embedded in `__gallery/index.html` as a `data:image/svg+xml` link. It works offline via `file://` without adding asset dependencies.
-- The sidebar contents now scroll independently of the maintenance row. **Rebuild index** and **Remove thumbs** stay anchored at the bottom and do not jump when switching Classic / Instagram, including when there are more than 12 photos.
-- The top-bar height is measured to keep sidebar alignment correct at different desktop widths and zoom settings; narrow/mobile layouts retain the side-by-side maintenance buttons.
-
-This is a UI-only change. Existing indexes, thumbnail caches, favorites, albums, and tags are untouched.
-
-## v7.3.2 — selection, tags, and viewer polish
-
-- Keyboard **Delete** now moves selected files or an open photo to reversible in-gallery Trash. It never performs permanent deletion; the permanent-delete buttons in Trash still require confirmation. **Move to Trash** no longer opens a confirmation dialog.
-- Album item counts align to the right, independent of name length.
-- Tag hover action toggles **+** (assign) and **−** (remove) for the selected media, based on existing tag membership or the selected tag filter. Only selected media are modified.
-- In Classic mode, clicking a filename bar selects the photo; clicking the picture opens it. Ctrl/Cmd-click, Shift-click, and drag selection remain available.
-- Drag selection can start in blank space above or below the rendered grid, including below the main gallery element.
-- The full-screen viewer keeps a fixed window size. Its albums/tags list expands to consume all available space between search and the bottom actions and scrolls without moving those actions. Images remain uncropped, with a small dark band above wide media.
-
-Existing indexes, thumbnails, and metadata files need no migration.
+`Delete selected` is only available inside the in-gallery Trash. **Move to Trash** merely hides originals, but **Delete selected**, **Delete all**, and **Delete permanently** remove the actual files from disk. Test permanent deletion with disposable media before using it on your archive.
 
 
-## v7.3.3 — StackEdit Wiki-inspired color refresh
+## v7.3.1 — Standalone favicon and steady maintenance toolbar
 
-- **Dark theme:** charcoal `#1b1e24` for the main background/header and `#171a20` for the sidebar, using warm orange `#f6a622` for primary actions, focus rings, and hover accents. This matches the supplied Local StackEdit Wiki dark screenshot.
-- **Light theme:** changed the bright red header to a calmer burgundy `#6b2638`, with a pale contrasting Open library button.
-- **Favicon:** an embedded SVG with a dark charcoal tile, orange outline/sun, and white mountain motif. No additional file, server, or network request is needed.
-- **Unchanged:** green selection outlines for tags and Instagram mode, saved theme preference, photos, indexes, favorites, tags, albums, cache, and delete behavior.
+- A self-contained SVG favicon is embedded directly in `__gallery/index.html` as a `data:` URI, so it works when opening the gallery directly via `file://` and requires no additional asset files.
+- The left sidebar now has an independently scrollable content region; **Rebuild index** and **Remove thumbs** remain anchored in their own fixed-height row at the bottom of the sidebar. Changes between Classic and Instagram mode, or galleries containing more than 12 images, no longer reposition the buttons.
+- The sidebar also measures the actual top-bar height when the header wraps or the browser zoom changes. At narrow responsive widths the controls remain a two-button row.
 
-Only `__gallery/index.html` needs to be replaced when updating from v7.3.2. No reindex or thumbnail rebuild is required.
+These are purely presentation changes: no reindexing, thumbnail regeneration or metadata migration is necessary.
+
+## v7.3.2 — Selection and viewer refinements
+
+- `Delete` now means **Move to Trash** for the current viewer item or the selected files. No popup is shown for reversible trash moves; permanent deletion still requires its separate confirmation.
+- Album counts are right-aligned, independent of album-name length.
+- When media is selected, a tag already assigned to the selection shows **−** on hover to remove it from those selected files. A missing tag shows **+** to assign it. The tag filter itself remains available without a media selection.
+- In Classic view, the filename row selects an image; clicking its image opens it even when other images are selected. Ctrl/Cmd-click, Shift-click and marquee selection remain available.
+- Drag selection can begin above or below the displayed photo grid, including empty space outside the main gallery element.
+- The photo viewer keeps a constant size across different files. Its album/tag area now expands to fill available vertical space and scrolls internally. The media is positioned near the top of its dark stage, minimizing black space **above** wide images while retaining their full aspect ratio.
+
+No index or cache migration is needed; replacing `__gallery/index.html` preserves existing metadata and thumbnails.
+
+
+## v7.3.3 — StackEdit-inspired colors
+
+- **Dark:** matched to the Local StackEdit Wiki screenshot — charcoal backgrounds
+  (`#1b1e24` main, `#171a20` sidebar) and warm orange (`#f6a622`) for
+  the primary Open library button, focus accents, and hover highlights.
+- **Light:** the former bright-red banner is now a muted burgundy (`#6b2638`)
+  with a soft, legible Open library button.
+- **Favicon:** dark charcoal photo-gallery tile with an orange border and sun,
+  embedded as an SVG data URL in `__gallery/index.html`. No external file or
+  server is required.
+- Green outlines on chosen tags, navigation categories, and Instagram mode
+  remain intact. No changes to the index, thumbnails, albums, tags or favorites.
+
+## v7.4 — Combined collections and folder lock
+
+- New **Fix folder** checkbox with folder/lock icon between All folders and Photos & videos. It is checked on fresh installations.
+- New **AND / OR** switch alongside Albums / Tags. Combine an album and multiple tags while keeping selection across the tabs.
+- OR temporarily ignores the folder for a global union of selected collections, but never overwrites the folder dropdown.
+- Albums and tags show counts excluding hidden Trash items; restoring the photo brings its count and membership back.
+- Hover actions show **−** when all selected files already have the label, including tags, albums and Favorites.
+- The results counter moved into the top banner next to the gallery title.
+- Narrow-screen sidebar toolbar overflow fixed; no metadata migration or cache regeneration is required.
