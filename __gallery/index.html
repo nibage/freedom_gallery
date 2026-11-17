@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.7.3</title>
+<title>Local Media Gallery v7.8</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%231b1e24%22%2F%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2218%22%20width%3D%2237%22%20height%3D%2232%22%20rx%3D%225%22%20fill%3D%22%2330353d%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%20opacity%3D%220.83%22%2F%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2212%22%20width%3D%2238%22%20height%3D%2237%22%20rx%3D%226%22%20fill%3D%22%23262a31%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2223%22%20r%3D%225%22%20fill%3D%22%23f6a622%22%2F%3E%0A%3Cpath%20d%3D%22M21%2043%2030%2030%2037%2037%2043%2032%2051%2043Z%22%20fill%3D%22%23f3f4f5%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
@@ -601,16 +601,152 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
 }
 
 
-/* v7.7.3: keep the entire search / folder / type / view strip together
-   immediately below the sticky header while the photo grid scrolls. */
-main > .filters {
-  position:sticky;
-  top:var(--gallery-header-height,68px);
-  z-index:8;
-  background:var(--bg);
-  padding-block:5px 8px;
-  border-bottom:1px solid var(--line);
-  /* The same parent holds the controls when they wrap at narrower widths. */
+
+
+/* v7.8: one sticky header holds title, counts, library and all media filters.
+   On narrower screens the filters wrap INSIDE this same header, not in a second
+   sticky row above the photo grid. */
+.top{
+  display:flex;
+  flex-wrap:nowrap;
+  align-items:center;
+  gap:10px;
+  padding:8px 14px;
+}
+.top-left{
+  display:flex;
+  flex:1 1 410px;
+  max-width:700px;
+  min-width:180px;
+  gap:8px;
+  align-items:center;
+  overflow:hidden;
+  flex-wrap:nowrap;
+}
+.top-left h1{flex:0 0 auto;font-size:18px;}
+.top-left #results{
+  flex:1 1 auto;
+  max-width:none!important;
+  min-width:0;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.top-left #libraryName{
+  flex:0 1 140px;
+  min-width:0;
+  max-width:140px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.top > .filters{
+  position:static!important;
+  top:auto!important;
+  z-index:auto!important;
+  display:flex;
+  flex:0 1 auto;
+  min-width:680px;
+  width:auto;
+  max-width:100%;
+  gap:6px;
+  flex-wrap:nowrap;
+  align-items:stretch;
+  margin:0!important;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+}
+.top > .filters > #query{
+  flex:0 1 220px;
+  width:220px;
+  min-width:145px;
+  max-width:240px;
+}
+.top > .filters > #folder{
+  flex:0 1 190px;
+  width:190px;
+  min-width:145px;
+  max-width:190px;
+}
+.top > .filters > .folder-lock{
+  flex:0 0 auto;
+  min-width:58px;
+  padding-inline:7px;
+}
+.top > .filters > #kind{
+  flex:0 0 170px;
+  width:170px;
+  min-width:170px;
+  max-width:170px;
+}
+.top > .filters > #layoutToggle{
+  flex:0 0 auto;
+  white-space:nowrap;
+  font-size:12px;
+  padding-inline:9px;
+}
+.top-right{
+  flex:0 1 auto;
+  min-width:0;
+  margin-left:auto;
+  gap:6px;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+}
+/* The light header has white text; its actual input/select/button labels need
+   dark contrast on the pale controls rather than inheriting the banner color. */
+html[data-theme="light"] .top > .filters > input,
+html[data-theme="light"] .top > .filters > select,
+html[data-theme="light"] .top > .filters > .folder-lock,
+html[data-theme="light"] .top > .filters > #layoutToggle{
+  color:var(--text)!important;
+  background:var(--control)!important;
+}
+html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted);}
+@media(max-width:1750px){
+  .top{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"brand actions" "filters filters";
+    row-gap:7px;
+  }
+  .top-left{grid-area:brand;max-width:none;width:100%;min-width:0;}
+  .top-right{grid-area:actions;min-width:0;max-width:100%;margin-left:0;}
+  .top > .filters{
+    grid-area:filters;
+    display:flex;
+    min-width:0;
+    width:100%;
+    max-width:100%;
+    justify-content:flex-end;
+  }
+  .top > .filters > #query{
+    flex:1 1 200px;
+    width:auto;
+    max-width:260px;
+    margin-right:auto;
+  }
+}
+@media(max-width:990px){
+  .top > .filters{flex-wrap:wrap;justify-content:flex-start;}
+  .top > .filters > #query{flex:1 1 180px;min-width:150px;max-width:none;margin-right:0;}
+  .top > .filters > #folder{flex:1 1 180px;width:auto;max-width:none;}
+  .top > .filters > #kind{flex:1 1 160px;min-width:160px;max-width:none;width:auto;}
+  .top > .filters > #layoutToggle{flex:0 0 auto;}
+}
+@media(max-width:680px){
+  .top{
+    display:grid;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"brand" "actions" "filters";
+    padding:9px 10px;
+  }
+  .top-left{min-width:0;gap:7px;}
+  .top-left h1{font-size:17px;}
+  .top-left #libraryName{max-width:100px;}
+  .top-right{justify-content:flex-start;gap:6px;}
+  .top > .filters > #query{flex:1 1 100%;max-width:none;}
 }
 
 </style>
@@ -619,6 +755,16 @@ main > .filters {
 <header class="top">
   <div class="top-left">
     <h1>▦ freedom_gallery</h1><span id="results" class="results-header" aria-live="polite">Choose a media library folder.</span><span class="small" id="libraryName">No library selected</span>
+  </div>
+  <div class="filters">
+    <input id="query" type="search" placeholder="Search… (/)" title="Search filename, path or tag; press / to focus" aria-label="Search media">
+    <select id="folder" aria-label="Filter by folder"><option value="">All folders</option></select>
+    <label class="folder-lock" id="folderLockLabel" title="Lock folder: keep the selected folder while browsing albums and tags. In OR mode, folder is temporarily ignored but remembered.">
+      <input id="folderLock" type="checkbox" checked aria-label="Lock selected folder" />
+      <span class="folder-lock-icons" aria-hidden="true"><span id="folderLockIcon">🔒</span><span>📁</span></span>
+    </label>
+    <select id="kind" aria-label="Media type"><option value="">Photos & videos</option><option value="image">Photos only</option><option value="video">Videos only</option></select>
+    <button class="btn layout-toggle" id="layoutToggle" type="button" aria-pressed="false" title="Switch between classic cards and a compact, edge-to-edge square media grid. Your choice is saved for this gallery.">▦ Instagram mode</button>
   </div>
   <div class="top-right">
     <span id="status" class="small">Ready</span>
@@ -660,16 +806,6 @@ main > .filters {
     </div>
   </aside>
   <main>
-    <div class="filters">
-      <input id="query" type="search" placeholder="Search filename, path or tag… (/)" aria-label="Search media">
-      <select id="folder" aria-label="Filter by folder"><option value="">All folders</option></select>
-      <label class="folder-lock" id="folderLockLabel" title="Lock folder: keep the selected folder while browsing albums and tags. In OR mode, folder is temporarily ignored but remembered.">
-        <input id="folderLock" type="checkbox" checked aria-label="Lock selected folder" />
-        <span class="folder-lock-icons" aria-hidden="true"><span id="folderLockIcon">🔒</span><span>📁</span></span>
-      </label>
-      <select id="kind" aria-label="Media type"><option value="">Photos & videos</option><option value="image">Photos only</option><option value="video">Videos only</option></select>
-      <button class="btn layout-toggle" id="layoutToggle" type="button" aria-pressed="false" title="Switch between classic cards and a compact, edge-to-edge square media grid. Your choice is saved for this gallery.">▦ Instagram mode</button>
-    </div>
     <div class="results-toolbar">
       <button class="btn danger" id="deleteSelectedTrash" hidden disabled title="Permanently delete only the selected indexed Trash files. Original media is deleted without using the system Recycle Bin.">🗑 Delete selected</button>
       <button class="btn danger" id="deleteAllTrash" hidden disabled title="Permanently delete every indexed file in the in-gallery Trash. The operating system Recycle Bin is not used.">🗑 Delete all</button>
@@ -1416,7 +1552,7 @@ async function activateLibrary(picked){
   await flushThumbManifest();await saveQueue.catch(()=>{});
   scanNo++;clearTimeout(fileInfoTimer);if(el('viewer').open)closeViewer();clearThumbs();
   clearSelection();lastUndo=null;root=picked;configuredRootPath='';dirCache=new Map([['',picked]]);images=[];byPath.clear();
-  el('libraryName').textContent=picked.name;activeView={type:'all'};visibleCount=80;
+  el('libraryName').textContent=picked.name;el('libraryName').title=picked.name;activeView={type:'all'};visibleCount=80;
   el('folder').value='';el('kind').value='';el('query').value='';setStatus('Loading metadata…');
   await loadMetadata();await loadFullPathConfig();await autoConfigureFullPath();await loadThumbManifest();await loadFileInfo();
   if(!await loadIndex())await scan();
@@ -2340,7 +2476,7 @@ function updateResultsLine(){
   const slice=Math.min(visibleCount,filtered.length),album=currentAlbum();
   const criteriaCount=selectedAlbumNames.size+selectedTagKeys.size+selectedSpecialViews.size;
   const prefix=criteriaCount?(criteriaCount===1?(selectedSpecialViews.size?[...selectedSpecialViews][0]+' · ':album?'Album · ':'Tag · '):criteriaCount+' filters '+collectionOperator+' · '):'';
-  const node=el('results');if(node)node.textContent=prefix+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
+  const node=el('results');if(node){node.textContent=prefix+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();node.title=node.textContent;}
 }
 function updateSelectedDeleteButton(){
   const button=el('deleteSelectedTrash');if(!button)return;

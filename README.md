@@ -254,3 +254,11 @@ Modal dialogs can be dismissed with **Cancel**, **×**, **Esc**, or clicking out
 ## v7.7.3 — Sticky filter row
 
 The complete filter row (filename search, folder selector, folder lock, media type, and Instagram mode) now **stays together beneath the sticky top header** while you scroll through photos and videos. It uses the header's measured height, so it also stays aligned when the top bar wraps or the browser is zoomed. The controls retain their natural 52px minimum height, and all wrapped rows move together as one block. Gallery contents, metadata, indexes and thumbnails are unchanged.
+
+## v7.8 — Compact combined top bar
+
+The filename search, **All folders**, folder lock, **Photos & videos**, and **Instagram mode** controls now live **inside the same sticky top header** as the `freedom_gallery` title, results count, and library name. The separate sticky filter bar above the photo grid has been removed, giving the media grid more vertical space.
+
+The search input is compact—up to **240px** on wide desktops and **260px** in medium-width header layouts, with flexible wrapping for narrow windows. All controls remain functional and stay together inside the one header as it scrolls. If the results count or library name is shortened to fit, hover to read the full text. Dark and light color schemes preserve readable control labels.
+
+Only layout/tooltip markup changed. Existing folder/tag/album filters, thumbnail caches, library metadata, and gallery operations are unchanged. Updating just `__gallery/index.html` is sufficient.
