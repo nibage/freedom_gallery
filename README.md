@@ -64,8 +64,8 @@ If a remembered folder is moved, deleted, disconnected, or access is revoked, au
 | **Theme: System / Light / Dark** | Follow your OS preference, or override it independently for this HTML gallery. |
 | **Classic / Instagram** | Switch between labeled cards and a gapless square-tile grid. The selected layout is remembered. |
 | **Folder / type filters** | Select a folder and subfolders, media type, and normal filename/tag search. |
-| **Fix folder** | Checked **by default**. Keep the chosen folder when browsing albums and tags in AND mode; unchecked means album/tag filters can search globally. Does not change the selected folder value. |
-| **AND / OR** | **AND** (default): files must belong to the chosen album **and every selected tag**, also matching the selected folder when Fix folder is checked. **OR**: files may belong to the album **or any selected tag** across the *whole* library, temporarily ignoring the folder. The folder returns when you clear collection filters or switch back to AND. |
+| **Folder lock** (checkbox → lock → folder icons) | Checked **by default**. When checked, OFF/OR/AND album/tag results are constrained to the chosen folder. When unchecked, selecting album/tag filters searches the whole library; clearing selections or choosing All media returns to the root. |
+| **OFF / OR / AND** | **OFF** (default) allows one album **or** one tag. **OR** allows multiple albums and tags and shows their union. **AND** allows multiple albums and tags and shows their intersection. In all modes a checked folder lock limits results to the current folder; unchecked makes active collection filters global. |
 | **Albums / Tags** | Choose an album and one or more tags together (switch tabs to access each type). Green outlines show selected tags; click a selected album/tag again to unselect it and return toward All media. |
 | **+ New / − Remove** | Create or delete a virtual album; in Tags mode, create reusable tags (including unassigned tags) or remove selected tags from all media. Original files are never deleted by these collection actions. |
 | **All media / Favorites / Trash** | Filter all available media, favorites, or reversible Trash; each sidebar item displays its indexed file count. |
@@ -87,7 +87,7 @@ The results count sits next to the **freedom_gallery** title in the top bar, fre
 
 ### Albums and tags
 
-Inside the full-screen viewer, buttons appear vertically as **Favorites** and **Trash**, followed by a compact **Albums / Tags** switch with **+ New**, **− Remove**, search, and clickable memberships. Changes are saved on click; no separate Save tags button is needed. The bottom-aligned **Show folder** and **Copy path** buttons stay fixed; the album/tag list expands to use all available space between search and those controls, scrolling as needed. The photo viewer dimensions remain fixed across different media sizes and collection counts. The viewer is now shorter on desktop, reducing unused dark space below landscape photos without cropping; images remain top-aligned and albums/tags scroll internally.
+Inside the full-screen viewer, buttons appear vertically as **Favorites** and **Trash**, followed by a compact **Albums / Tags** switch with **+ New**, **− Remove**, search, and clickable memberships. Changes are saved on click; no separate Save tags button is needed. The bottom-aligned **Show folder** and **Copy path** buttons stay fixed; the album/tag list expands to use all available space between search and those controls, scrolling as needed. The photo viewer dimensions remain fixed across different media sizes and collection counts. The viewer is now shorter on desktop, reducing unused dark space below landscape photos without cropping; images are centered vertically in their dark stage, with matching top and bottom bars, and albums/tags scroll internally.
 
 
 **Trash counts:** moving a photo into the gallery Trash does not remove its album memberships or tag assignments. Album and tag counters exclude trashed items, so they decrease while the file is hidden and return to their previous values when restored. Permanent deletion, in contrast, removes that file's saved associations.
@@ -213,3 +213,16 @@ No index or cache migration is needed; replacing `__gallery/index.html` preserve
 - On desktop, the current album/tag list expands all the way to the stationary **Rebuild index / Remove thumbs** buttons, scrolling internally when needed.
 
 **Upgrade:** Replace only `__gallery/index.html`. No server, database, metadata migration or thumbnail regeneration is needed.
+
+
+## v7.6 — OFF/OR/AND filters, wheel navigation and balanced letterboxing
+
+- **OFF → OR → AND → OFF** is a three-state switch placed beside the collection search. OFF is neutral; OR and AND use a green outline. The choice persists for this gallery.
+- **OFF:** one album **or** one tag can be selected; choosing a different item replaces it. Clicking the selected item again clears the filter.
+- **OR:** select multiple albums and tags; show photos belonging to **any selected album or tag**.
+- **AND:** select multiple albums and tags; show photos belonging to **all selected albums and carrying all selected tags**.
+- **Lock folder:** checkbox, lock icon, folder icon (no text); enabled by default. When checked, folder scope applies to all three modes. When unchecked, selecting album/tag filters uses the entire library, but clearing all selections or clicking All media resets the folder dropdown to All folders.
+- **Folder combobox:** hovering and scrolling the mouse wheel cycles folders and refreshes results.
+- **Viewer:** uncropped images are centered vertically to make upper/lower dark bands equal; viewer dimensions remain fixed between images.
+
+Upgrade by replacing only `__gallery/index.html`. Existing metadata, indexes and thumbnails need no migration or regeneration.
