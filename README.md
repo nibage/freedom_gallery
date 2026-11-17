@@ -250,3 +250,7 @@ Modal dialogs can be dismissed with **Cancel**, **×**, **Esc**, or clicking out
 - In the **opened image viewer**, clicking an album or tag **name** only selects it for the existing global **Remove** action. It does **not** change the open image's album/tag membership.
 - Only the green **+ / −** control adds or removes the open photo from an album or tag. These icons are real keyboard-accessible buttons with descriptive labels; touch devices show them without requiring hover.
 - The changes are styling and viewer interactions only; no index, cache, photo, or metadata migrations are needed.
+
+## v7.7.3 — Sticky filter row
+
+The complete filter row (filename search, folder selector, folder lock, media type, and Instagram mode) now **stays together beneath the sticky top header** while you scroll through photos and videos. It uses the header's measured height, so it also stays aligned when the top bar wraps or the browser is zoomed. The controls retain their natural 52px minimum height, and all wrapped rows move together as one block. Gallery contents, metadata, indexes and thumbnails are unchanged.
