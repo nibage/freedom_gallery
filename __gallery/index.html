@@ -2514,9 +2514,9 @@ function updateResultsLine(){
   const prefix=criteriaCount?(criteriaCount===1?(selectedSpecialViews.size?[...selectedSpecialViews][0]+' · ':album?'Album · ':'Tag · '):criteriaCount+' filters '+collectionOperator+' · '):'';
   const node=el('results');
   if(node){
-    // Keep only one concise visible counter. The more detailed filter count
-    // remains available on hover or to assistive technology.
-    node.textContent='showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
+    // Show matched-result count and the visible/total-file count, without
+    // repeating the file total in the separate loading-status indicator.
+    node.textContent=filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
     node.title=prefix+filtered.length.toLocaleString('cs-CZ')+' results · '+node.textContent;
   }
 }

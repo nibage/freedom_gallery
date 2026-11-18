@@ -77,7 +77,7 @@ Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edg
 
 | Control | Behavior |
 | :-- | :-- |
-| **Search** | Find items by filename, path, or tag. The header shows only `showing 80 / 76 034 files` (example); hover for detailed filter matches. |
+| **Search** | Find items by filename, path, or tag. The header shows only `82 results · showing 80 / 76 034 files` (example); hover for detailed filter matches. |
 | **All folders / Fix folder** | Browse one folder and its descendants; lock the folder scope while selecting collections. |
 | **Photos & videos** | Show all supported media, only photos, or only videos. |
 | **Classic / Instagram mode** | Switch between labeled thumbnails and a compact, gapless square grid. |
@@ -89,7 +89,7 @@ Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edg
 | **Remove thumbs** | Recreate cached previews if they are stale or broken. |
 | **Theme** | System, Light, or Dark. |
 
-The status beside the library controls says **loaded from index** when existing saved metadata was used. It shows scanning or other activity when appropriate; it does **not** repeat the total number of files.
+The visible results count remains useful when filters are active. The status beside the library controls says **loaded from index** when existing saved metadata was used. It shows scanning or other activity when appropriate; it does **not** repeat the total number of files.
 
 ## Selection, viewer and keyboard controls
 
