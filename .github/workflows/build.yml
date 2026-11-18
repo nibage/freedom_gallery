@@ -13,7 +13,7 @@ permissions:
 
 jobs:
   distribute:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Check out the repository
         uses: actions/checkout@v4
@@ -27,18 +27,21 @@ jobs:
         run: node --test tests/*.test.mjs
 
       - name: Install screenshot tooling (CI only)
+        id: install_screenshots
+        continue-on-error: true
         run: |
           npm install --no-save --no-package-lock playwright@1.56.1
           npx playwright install --with-deps chromium
 
       - name: Capture actual application screenshots using the included demo
         id: screenshots
+        if: steps.install_screenshots.outcome == 'success'
         continue-on-error: true
         run: node scripts/capture-screenshots.mjs
 
       - name: Describe screenshot status
         if: steps.screenshots.outcome != 'success'
-        run: echo 'Demo screenshot capture failed. Review the job log; ZIP packaging will still run.' >> "$GITHUB_STEP_SUMMARY"
+        run: echo 'Demo screenshot setup/capture failed or was skipped. See the job log; the clean ZIP packaging still runs independently.' >> "$GITHUB_STEP_SUMMARY"
 
       - name: Build clean application and demo ZIPs
         shell: bash
