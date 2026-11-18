@@ -118,17 +118,30 @@ try {
     await page.screenshot({ path: join(dest, name + '.png'), animations: 'disabled', fullPage: false });
     console.log('Captured', name + '.png');
   }
-  // Keep exactly two screenshots in README and distribution ZIPs.
+  // Keep exactly three screenshots in README and distribution ZIPs.
   // Remove obsolete captures from previous gallery versions.
-  const desired = new Set(['classic-dark.png', 'classic-light.png']);
+  const desired = new Set(['classic-dark.png', 'classic-light.png', 'instagram-dark.png']);
   for (const filename of await readdir(dest)) {
     if (filename.toLowerCase().endsWith('.png') && !desired.has(filename))
       await unlink(join(dest, filename));
   }
 
-  // The same app, demo media, viewport and Classic layout in both themes.
+  // Real app screenshots at one consistent viewport with the same demo media.
   await page.evaluate(() => window.scrollTo(0, 0));
   await snap('classic-dark');
+
+  // Capture the real Instagram view, then return to Classic for Light mode.
+  await page.locator('#layoutToggle').click();
+  await page.waitForFunction(() =>
+    document.getElementById('layoutToggle')?.getAttribute('aria-pressed') === 'true'
+  );
+  await page.waitForTimeout(450);
+  await snap('instagram-dark');
+  await page.locator('#layoutToggle').click();
+  await page.waitForFunction(() =>
+    document.getElementById('layoutToggle')?.getAttribute('aria-pressed') === 'false'
+  );
+
   await page.locator('#themeSelect').selectOption('light');
   await page.waitForTimeout(450);
   await snap('classic-light');

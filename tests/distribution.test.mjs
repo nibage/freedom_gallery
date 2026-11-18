@@ -23,14 +23,16 @@ test('search is wider while remaining responsive',()=>{
   assert.equal((html.match(/class="filters"/g)||[]).length,1);
 });
 
-test('README references current app version and exactly two screenshots',()=>{
+test('README references current app version and exactly three screenshots',()=>{
   const version=html.match(/<title>Local Media Gallery v([0-9.]+)<\/title>/)?.[1];
   assert.ok(version,'app version should exist in title');
   assert.ok(readme.includes('Current version: v'+version));
   const images=[...readme.matchAll(/docs\/screenshots\/[a-z0-9-]+\.png/g)].map(x=>x[0]);
-  assert.deepEqual(images,['docs/screenshots/classic-dark.png','docs/screenshots/classic-light.png']);
-  assert.ok(!readme.includes('instagram-dark.png'));
+  assert.deepEqual(images,['docs/screenshots/classic-dark.png','docs/screenshots/classic-light.png','docs/screenshots/instagram-dark.png']);
   assert.ok(!readme.includes('viewer-dark.png'));
+  const capture=readFileSync(new URL('../scripts/capture-screenshots.mjs',import.meta.url),'utf8');
+  for(const name of ['classic-dark','classic-light','instagram-dark']) assert.ok(capture.includes("await snap('"+name+"')"));
+  assert.match(capture,/const desired = new Set\(\['classic-dark.png', 'classic-light.png', 'instagram-dark.png'\]\)/);
   for(const section of ['# Technical documentation','## Install and download','## Files and metadata','## GitHub builds and release ZIPs'])
     assert.ok(readme.includes(section));
 });

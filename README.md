@@ -23,12 +23,12 @@ Browse thousands of files, build albums and tags, and keep ownership of your ori
 
 These screenshots show the **actual current application**, captured automatically in Chromium at **2048 × 1080** using the included fictional demo library. No personal photos are used.
 
-| Dark mode | Light mode |
-| :--: | :--: |
-| ![Freedom Gallery v7.9.1 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.1 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) |
-| Charcoal interface and warm orange accents. | Light interface with burgundy accents. |
+| Dark mode | Light mode | Instagram mode |
+| :--: | :--: | :--: |
+| ![Freedom Gallery v7.9.1 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.1 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.1 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
+| Charcoal interface and warm orange accents. | Light interface with burgundy accents. | Edge-to-edge, square photo tiles in the dark theme. |
 
-Both themes include the full, compact toolbar: result count, responsive search, folder selector, media type, Instagram-mode switch, library controls and Theme selector.
+All three screenshots show the current gallery's compact single-row header, with its results count, search, folder/type filters, library controls and Theme selector.
 
 ### Latest release highlights
 
@@ -143,7 +143,7 @@ The workflow creates two ZIP files:
 
 Neither archive includes `.github/`, `tests/`, `scripts/`, `.gitignore`, Node dependencies, temporary caches, or other development helpers. Each `main` build provides a downloadable GitHub Actions artifact; a `v*` tag additionally publishes direct ZIP assets to GitHub Releases.
 
-The workflow captures the **two README screenshots** (Dark and Light) from the current gallery and its bundled demo. It removes obsolete screenshots so only the two current images are published in `docs/screenshots/`. The build can still produce ZIPs if optional screenshot capture is unavailable.
+The workflow captures **three README screenshots** (Dark, Light and Instagram mode) from the current gallery and its bundled demo. It removes obsolete screenshots so only these three current images are published in `docs/screenshots/`. The build can still produce ZIPs if optional screenshot capture is unavailable.
 
 **Branch housekeeping:** A separate GitHub Actions workflow automatically deletes same-repository `feature/`, `fix/` and `docs/` branches after their pull requests have been merged, but only if they are unchanged and unused by open pull requests. Active work and `main` are preserved.
 
