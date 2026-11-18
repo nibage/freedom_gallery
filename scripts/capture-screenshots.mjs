@@ -2,7 +2,7 @@
 // Never opens or uploads the user's personal photo library.
 import { chromium } from 'playwright';
 import { createServer } from 'node:http';
-import { readFile, readdir, mkdir } from 'node:fs/promises';
+import { readFile, readdir, mkdir, unlink } from 'node:fs/promises';
 import { join, resolve, relative, extname, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -32,7 +32,7 @@ const address = server.address();
 let browser;
 try {
   browser = await chromium.launch({ headless: true, args: ['--disable-dev-shm-usage'] });
-  const context = await browser.newContext({ viewport: { width: 1480, height: 950 }, deviceScaleFactor: 1 });
+  const context = await browser.newContext({ viewport: { width: 2048, height: 1080 }, deviceScaleFactor: 1 });
   const page = await context.newPage();
   const errors = [];
   page.on('pageerror', e => errors.push(e.message));
@@ -118,23 +118,19 @@ try {
     await page.screenshot({ path: join(dest, name + '.png'), animations: 'disabled', fullPage: false });
     console.log('Captured', name + '.png');
   }
-  await snap('classic-dark');
-  await page.locator('#layoutToggle').click();
-  await page.waitForTimeout(400);
-  await snap('instagram-dark');
-  await page.locator('#layoutToggle').click();
-  try {
-    await page.locator('#gallery .photo img.thumb').first().click({ timeout: 10000 });
-    await page.locator('#viewer').waitFor({ state: 'visible', timeout: 10000 });
-    await snap('viewer-dark');
-    await page.locator('#closeViewer').click();
-  } catch (viewerError) {
-    console.warn('Viewer screenshot omitted:', viewerError.message);
-    // Fail rather than silently publishing a false screenshot of the viewer.
-    throw viewerError;
+  // Keep exactly two screenshots in README and distribution ZIPs.
+  // Remove obsolete captures from previous gallery versions.
+  const desired = new Set(['classic-dark.png', 'classic-light.png']);
+  for (const filename of await readdir(dest)) {
+    if (filename.toLowerCase().endsWith('.png') && !desired.has(filename))
+      await unlink(join(dest, filename));
   }
+
+  // The same app, demo media, viewport and Classic layout in both themes.
+  await page.evaluate(() => window.scrollTo(0, 0));
+  await snap('classic-dark');
   await page.locator('#themeSelect').selectOption('light');
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(450);
   await snap('classic-light');
   if (errors.length) console.warn('Browser JavaScript warnings:', errors.slice(0, 5).join('; '));
   await context.close();

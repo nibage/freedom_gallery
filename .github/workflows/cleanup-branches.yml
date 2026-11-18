@@ -1,0 +1,25 @@
+name: Delete merged branches
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Delete only verified merged and unchanged feature branches
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node scripts/cleanup-merged-branches.mjs

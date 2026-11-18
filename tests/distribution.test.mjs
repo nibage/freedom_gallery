@@ -23,9 +23,14 @@ test('search is wider while remaining responsive',()=>{
   assert.equal((html.match(/class="filters"/g)||[]).length,1);
 });
 
-test('README showcases demo screenshots and includes technical installation guidance',()=>{
-  for(const image of ['classic-dark','instagram-dark','viewer-dark','classic-light'])
-    assert.ok(readme.includes('docs/screenshots/'+image+'.png'));
+test('README references current app version and exactly two screenshots',()=>{
+  const version=html.match(/<title>Local Media Gallery v([0-9.]+)<\/title>/)?.[1];
+  assert.ok(version,'app version should exist in title');
+  assert.ok(readme.includes('Current version: v'+version));
+  const images=[...readme.matchAll(/docs\/screenshots\/[a-z0-9-]+\.png/g)].map(x=>x[0]);
+  assert.deepEqual(images,['docs/screenshots/classic-dark.png','docs/screenshots/classic-light.png']);
+  assert.ok(!readme.includes('instagram-dark.png'));
+  assert.ok(!readme.includes('viewer-dark.png'));
   for(const section of ['# Technical documentation','## Install and download','## Files and metadata','## GitHub builds and release ZIPs'])
     assert.ok(readme.includes(section));
 });

@@ -1,8 +1,8 @@
 <div align="center">
 
-![Freedom Gallery — offline photo and video organizer](docs/media/hero.svg)
-
 # freedom_gallery
+
+**Current version: v7.9.1**
 
 **Your pictures. Your folders. Your freedom.**
 
@@ -19,19 +19,20 @@ Browse thousands of files, build albums and tags, and keep ownership of your ori
 | :-- | :-- | :-- | :-- |
 | Leave photos and videos in their existing directories. | No server, cloud account, database, or upload. | Favorites, reusable tags, virtual albums, and fast filters. | Light/dark themes, Classic and Instagram layouts, keyboard shortcuts. |
 
-### A tour of the interface
+### Screenshots — v7.9.1
 
-These **application screenshots** are captured automatically in GitHub Actions from the included, fictional 16-image demo library. They contain no personal media.
+These screenshots show the **actual current application**, captured automatically in Chromium at **2048 × 1080** using the included fictional demo library. No personal photos are used.
 
-| Classic gallery (Dark) | Instagram-style grid (Dark) |
+| Dark mode | Light mode |
 | :--: | :--: |
-| ![Freedom Gallery Classic view, dark theme](docs/screenshots/classic-dark.png) | ![Freedom Gallery Instagram-style square grid, dark theme](docs/screenshots/instagram-dark.png) |
-| Search and organize without leaving your folders. | Browse a spacious, edge-to-edge image grid. |
+| ![Freedom Gallery v7.9.1 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.1 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) |
+| Charcoal interface and warm orange accents. | Light interface with burgundy accents. |
 
-| Full-size viewer | Light theme |
-| :--: | :--: |
-| ![Photo viewer with album and tag management](docs/screenshots/viewer-dark.png) | ![Freedom Gallery Classic view, light theme](docs/screenshots/classic-light.png) |
-| Mark favorites, tag a photo, or place it in an album using the green **+ / −** controls. | A calmer, burgundy-accented alternative. |
+Both themes include the full, compact toolbar: result count, responsive search, folder selector, media type, Instagram-mode switch, library controls and Theme selector.
+
+### Latest release highlights
+
+**v7.9.1** keeps the complete **results · showing / total files** counter visible on widescreen monitors. The search field expands to use the remaining space without pushing Theme onto a second line. At smaller window sizes the same header adapts responsively.
 
 ### See how it works
 
@@ -142,7 +143,9 @@ The workflow creates two ZIP files:
 
 Neither archive includes `.github/`, `tests/`, `scripts/`, `.gitignore`, Node dependencies, temporary caches, or other development helpers. Each `main` build provides a downloadable GitHub Actions artifact; a `v*` tag additionally publishes direct ZIP assets to GitHub Releases.
 
-The workflow also captures fresh UI screenshots from the bundled demo (with no personal images). The screenshots in `docs/screenshots/` are updated by the automation when permitted by repository branch settings.
+The workflow captures the **two README screenshots** (Dark and Light) from the current gallery and its bundled demo. It removes obsolete screenshots so only the two current images are published in `docs/screenshots/`. The build can still produce ZIPs if optional screenshot capture is unavailable.
+
+**Branch housekeeping:** A separate GitHub Actions workflow automatically deletes same-repository `feature/`, `fix/` and `docs/` branches after their pull requests have been merged, but only if they are unchanged and unused by open pull requests. Active work and `main` are preserved.
 
 For the exhaustive feature history and older version notes, see [the archived technical reference](docs/REFERENCE.md).
 
@@ -150,6 +153,3 @@ For the exhaustive feature history and older version notes, see [the archived te
 
 Your indexed files and original media remain on your computer; the app does not upload them. Browser read/write permission is needed because the gallery intentionally writes its **human-readable metadata** beside your media. See [LICENSE](LICENSE) for the repository's license.
 
-## v7.9.1 — Single-row widescreen header
-
-On **1800px and wider browser windows**, the gallery title, complete `results · showing / total files` counter, a flexible search input, folder/type selectors, Instagram toggle, `loaded from index` status, library picker, Remove/Open actions, and **Theme** all fit on **one nonwrapping header row**. The search input uses only the horizontal space left after keeping the counts, labels and buttons readable. On smaller screens, the controls use a coherent responsive two-row layout instead of clipping or overlapping. The data model, filters, saved metadata and index are unchanged.
