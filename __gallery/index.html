@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.8.1</title>
+<title>Local Media Gallery v7.9</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%231b1e24%22%2F%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2218%22%20width%3D%2237%22%20height%3D%2232%22%20rx%3D%225%22%20fill%3D%22%2330353d%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%20opacity%3D%220.83%22%2F%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2212%22%20width%3D%2238%22%20height%3D%2237%22%20rx%3D%226%22%20fill%3D%22%23262a31%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2223%22%20r%3D%225%22%20fill%3D%22%23f6a622%22%2F%3E%0A%3Cpath%20d%3D%22M21%2043%2030%2030%2037%2037%2043%2032%2051%2043Z%22%20fill%3D%22%23f3f4f5%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
@@ -751,6 +751,40 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   .top > .filters > #query{flex:1 1 100%;max-width:none;}
 }
 
+
+/* v7.9: one total-file count plus a wider filename/path/tag search.
+   Keep responsive wrapping inside the same sticky header. */
+.top > .filters > #query{
+  flex:1 1 390px;
+  width:clamp(270px,26vw,440px);
+  min-width:220px;
+  max-width:440px;
+}
+@media (max-width:1750px){
+  .top > .filters > #query{
+    flex:1 1 440px;
+    width:auto;
+    min-width:240px;
+    max-width:540px;
+    margin-right:auto;
+  }
+}
+@media (max-width:990px){
+  .top > .filters > #query{
+    flex:1 1 250px;
+    min-width:180px;
+    max-width:none;
+    margin-right:0;
+  }
+}
+@media (max-width:680px){
+  .top > .filters > #query{
+    flex:1 1 100%;
+    width:100%;
+    min-width:0;
+    max-width:none;
+  }
+}
 </style>
 </head>
 <body>
@@ -1389,7 +1423,7 @@ function installItems(items,origin){
   for(const folder of [...folders].sort((a,b)=>a.localeCompare(b,'cs',{numeric:true})))select.add(new Option(folder,folder));
   if(folders.has(before))select.value=before;
   el('rescan').disabled=scanInProgress||thumbResetting||deletingMedia;el('newCollection').disabled=false;el('collectionQuery').disabled=false;el('rebuildThumbs').disabled=scanInProgress||thumbResetting||deletingMedia;el('welcome').hidden=true;
-  renderAlbumList();renderTagList();filterAndRender();setStatus(images.length.toLocaleString('cs-CZ')+' files · '+origin);
+  renderAlbumList();renderTagList();filterAndRender();setStatus(origin);
 }
 async function loadIndex(){
   const d=await getMetaDir(false),txt=await readText(d,INDEX_NAME);
@@ -2478,7 +2512,13 @@ function updateResultsLine(){
   const slice=Math.min(visibleCount,filtered.length),album=currentAlbum();
   const criteriaCount=selectedAlbumNames.size+selectedTagKeys.size+selectedSpecialViews.size;
   const prefix=criteriaCount?(criteriaCount===1?(selectedSpecialViews.size?[...selectedSpecialViews][0]+' · ':album?'Album · ':'Tag · '):criteriaCount+' filters '+collectionOperator+' · '):'';
-  const node=el('results');if(node){node.textContent=prefix+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();node.title=node.textContent;}
+  const node=el('results');
+  if(node){
+    // Keep only one concise visible counter. The more detailed filter count
+    // remains available on hover or to assistive technology.
+    node.textContent='showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
+    node.title=prefix+filtered.length.toLocaleString('cs-CZ')+' results · '+node.textContent;
+  }
 }
 function updateSelectedDeleteButton(){
   const button=el('deleteSelectedTrash');if(!button)return;

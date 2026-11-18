@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="500" viewBox="0 0 1200 500" role="img" aria-label="Freedom Gallery, a local gallery for your photos and videos. Illustrative interface preview.">
+<defs>
+ <linearGradient id="bg" x2="1" y2="1"><stop stop-color="#191c22"/><stop offset="1" stop-color="#242831"/></linearGradient>
+ <linearGradient id="sky" x2="0" y2="1"><stop stop-color="#476a94"/><stop offset="1" stop-color="#d9ab83"/></linearGradient>
+ <linearGradient id="sun" x2="0" y2="1"><stop stop-color="#e7a66e"/><stop offset="1" stop-color="#a64b5a"/></linearGradient>
+ <clipPath id="round"><rect x="624" y="59" width="527" height="376" rx="16"/></clipPath>
+ <filter id="shadow"><feDropShadow dx="0" dy="14" stdDeviation="20" flood-opacity=".35"/></filter>
+</defs>
+<rect width="1200" height="500" rx="22" fill="url(#bg)"/>
+<path d="M0 0H1200" stroke="#f6a622" stroke-width="6"/>
+<g font-family="Inter,Segoe UI,Arial,sans-serif">
+ <rect x="60" y="80" width="76" height="76" rx="19" fill="#f6a622"/>
+ <rect x="74" y="101" width="43" height="37" rx="5" fill="#24272f"/>
+ <path d="M80 132L91 116L99 124L108 114L113 132Z" fill="#e7efe9"/><circle cx="108" cy="108" r="4" fill="#f6a622"/>
+ <text x="154" y="133" font-size="33" font-weight="750" letter-spacing="-1" fill="#f5f5f3">freedom_gallery</text>
+ <text x="61" y="218" font-size="42" font-weight="730" fill="#fffdf9">Your photos.</text>
+ <text x="61" y="270" font-size="42" font-weight="730" fill="#fffdf9">Your folders.</text>
+ <text x="61" y="322" font-size="42" font-weight="730" fill="#f6a622">Your freedom.</text>
+ <text x="61" y="367" font-size="19" fill="#bbc4cd">Offline gallery · No database · Human-readable metadata</text>
+ <rect x="61" y="401" width="150" height="40" rx="9" fill="#f6a622"/>
+ <text x="136" y="428" text-anchor="middle" font-size="16" font-weight="700" fill="#21242b">Browse locally</text>
+ <text x="229" y="427" font-size="15" fill="#a3aab5">Windows · Linux · macOS</text>
+</g>
+<g filter="url(#shadow)">
+ <rect x="624" y="59" width="527" height="376" rx="16" fill="#1b1e24" stroke="#414651"/>
+</g>
+<g clip-path="url(#round)" font-family="Inter,Segoe UI,Arial,sans-serif">
+ <rect x="624" y="59" width="527" height="47" fill="#1d2027"/><path d="M624 106H1151" stroke="#be8a30"/>
+ <text x="641" y="87" font-size="14" font-weight="700" fill="#f4f3f0">▦ freedom_gallery</text>
+ <text x="786" y="86" font-size="11" fill="#bbc4cd">showing 80 / 16 000 files</text>
+ <rect x="641" y="115" width="127" height="29" rx="6" fill="#292c34" stroke="#434954"/><text x="649" y="134" font-size="10" fill="#aeb4bc">Search…</text>
+ <rect x="775" y="115" width="116" height="29" rx="6" fill="#292c34" stroke="#434954"/><text x="786" y="134" font-size="10" fill="#e4e6e8">All folders⌄</text>
+ <rect x="897" y="115" width="88" height="29" rx="6" fill="#292c34" stroke="#434954"/><text x="906" y="134" font-size="9" fill="#e4e6e8">Photos &amp; videos</text>
+ <rect x="994" y="115" width="138" height="29" rx="6" fill="#24282f" stroke="#67b879"/><text x="1003" y="134" font-size="10" fill="#e4e6e8">▦ Instagram mode</text>
+ <rect x="624" y="149" width="108" height="286" fill="#171a20"/>
+ <text x="637" y="174" font-size="11" fill="#ffffff">▦ All media</text>
+ <text x="637" y="194" font-size="10" fill="#b8c3cf">♡ Favorites</text>
+ <text x="637" y="214" font-size="10" fill="#b8c3cf">▤ Albums</text>
+ <text x="640" y="239" font-size="10" fill="#f6a622">▤ Landscapes</text>
+ <text x="640" y="259" font-size="10" fill="#b8c3cf">▤ Travel</text>
+ <text x="640" y="280" font-size="10" fill="#b8c3cf"># nature</text>
+ <g>
+  <rect x="740" y="157" width="128" height="126" fill="url(#sky)"/>
+  <circle cx="841" cy="184" r="15" fill="#f6dbac"/>
+  <path d="M740 270L774 210L805 245L827 218L868 272V283H740Z" fill="#4e6470"/>
+  <path d="M740 281L780 247L818 282Z" fill="#263d43"/>
+  <rect x="873" y="157" width="130" height="126" fill="#678d8d"/>
+  <circle cx="966" cy="188" r="27" fill="#edc596"/><path d="M873 275L922 230L963 256L1003 219V283H873Z" fill="#375b59"/>
+  <rect x="1008" y="157" width="136" height="126" fill="url(#sun)"/>
+  <circle cx="1086" cy="190" r="26" fill="#ffdfbb"/><path d="M1008 273L1048 246L1087 260L1144 224V283H1008Z" fill="#533c59"/>
+  <rect x="740" y="288" width="128" height="127" fill="#7aa2af"/>
+  <path d="M740 380L770 340L793 356L833 305L868 386V415H740Z" fill="#f0f1e7"/>
+  <path d="M740 415L782 379L827 405L868 368V415Z" fill="#2c6068"/>
+  <rect x="873" y="288" width="130" height="127" fill="#b99cbb"/>
+  <path d="M873 395L925 330L963 357L1003 321V415H873Z" fill="#6d668c"/>
+  <rect x="1008" y="288" width="136" height="127" fill="#546a7a"/>
+  <circle cx="1095" cy="313" r="10" fill="#f6a622"/>
+  <path d="M1008 407L1050 356L1084 376L1109 343L1144 392V415H1008Z" fill="#253c52"/>
+ </g>
+</g>
+<text x="1135" y="459" text-anchor="end" fill="#77808c" font-family="Segoe UI,Arial" font-size="13">Illustrative UI preview · actual screenshots below</text>
+</svg>

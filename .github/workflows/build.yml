@@ -1,0 +1,102 @@
+name: Build downloadable Freedom Gallery ZIPs
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths-ignore:
+      - 'docs/screenshots/**'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  distribute:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js for real demo screenshots
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run app and packaging regression checks
+        run: node --test tests/*.test.mjs
+
+      - name: Install screenshot tooling (CI only)
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install --with-deps chromium
+
+      - name: Capture actual application screenshots using the included demo
+        id: screenshots
+        continue-on-error: true
+        run: node scripts/capture-screenshots.mjs
+
+      - name: Describe screenshot status
+        if: steps.screenshots.outcome != 'success'
+        run: echo 'Demo screenshot capture failed. Review the job log; ZIP packaging will still run.' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Build clean application and demo ZIPs
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF_NAME}" == v* ]]; then
+            VERSION="${GITHUB_REF_NAME}"
+          else
+            VERSION="main-${GITHUB_SHA:0:7}"
+          fi
+          mkdir -p dist .release-stage/__gallery .release-stage/docs
+          cp __gallery/index.html .release-stage/__gallery/index.html
+          cp README.md LICENSE .release-stage/
+          cp -R docs/media .release-stage/docs/
+          cp docs/REFERENCE.md .release-stage/docs/REFERENCE.md
+          if [[ -d docs/screenshots ]]; then
+            cp -R docs/screenshots .release-stage/docs/
+          fi
+
+          # Explicit allowlist: tests, scripts, .github, node_modules, caches,
+          # and other development helpers are never copied into this directory.
+          (cd .release-stage && zip -q -r "../dist/freedom-gallery-${VERSION}.zip" .)
+          cp -R demo-gallery .release-stage/demo-gallery
+          (cd .release-stage && zip -q -r "../dist/freedom-gallery-demo-${VERSION}.zip" .)
+
+          echo "### Distributable ZIPs" >> "$GITHUB_STEP_SUMMARY"
+          echo "- freedom-gallery-${VERSION}.zip — application only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- freedom-gallery-demo-${VERSION}.zip — application and bundled demo" >> "$GITHUB_STEP_SUMMARY"
+          unzip -Z1 "dist/freedom-gallery-${VERSION}.zip" | grep -E '(^|/)(\.github|tests|scripts|node_modules|\.gitignore)(/|$)' && {
+            echo 'Development files leaked into release ZIP' >&2
+            exit 1
+          } || test "$?" -eq 1
+
+      - name: Upload downloadable ZIP artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: freedom-gallery-zips
+          path: dist/*.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish direct ZIP assets on version tags
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/*.zip --title "Freedom Gallery $GITHUB_REF_NAME" --generate-notes
+
+      - name: Refresh README screenshots in the repository
+        if: github.ref == 'refs/heads/main' && steps.screenshots.outcome == 'success'
+        continue-on-error: true
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/screenshots/*.png
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: refresh demo screenshots [skip ci]"
+            git push origin HEAD:main
+          fi

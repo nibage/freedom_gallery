@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="230" viewBox="0 0 1100 230" role="img" aria-label="Your folders and media stay in place. Gallery data is saved as text next to the HTML file.">
+<style>text{font-family:Segoe UI,Arial,sans-serif}</style>
+<rect width="1100" height="230" rx="18" fill="#1b1e24"/>
+<g stroke="#464b54" stroke-width="2" fill="#24272f">
+<rect x="40" y="34" width="275" height="162" rx="12"/>
+<rect x="412" y="34" width="274" height="162" rx="12"/>
+<rect x="783" y="34" width="275" height="162" rx="12"/>
+</g>
+<g font-size="23" font-weight="700" fill="#f6a622">
+<text x="65" y="77">📁 Your media</text>
+<text x="438" y="77">▦ index.html</text>
+<text x="811" y="77">📝 Plain text</text>
+</g>
+<g font-size="17" fill="#e4e6e9">
+<text x="65" y="109">Photos / 2026 / …</text><text x="65" y="137">Originals never moved</text><text x="65" y="165">Organize on your disk</text>
+<text x="438" y="109">Works offline</text><text x="438" y="137">Classic + Instagram</text><text x="438" y="165">Search, filter, select</text>
+<text x="811" y="109">favorites.txt</text><text x="811" y="137">tags.tsv</text><text x="811" y="165">albums/*.txt</text>
+</g>
+<g stroke="#67b879" stroke-width="4" fill="none" stroke-linecap="round"><path d="M327 112H390m-14-10 14 10-14 10"/><path d="M698 112h64m-14-10 14 10-14 10"/></g>
+</svg>
