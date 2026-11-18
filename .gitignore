@@ -1,10 +1,16 @@
-# Only the app and the bundled demo gallery are publishable by default.
+# Source repository allowlist. Personal photo media and generated gallery metadata
+# must not be published accidentally. Distribution ZIPs use a stricter allowlist.
 *
 !.gitignore
 !README.md
+!LICENSE
+
+# Application (never commit personal __gallery/data/ files).
 !__gallery/
 __gallery/*
 !__gallery/index.html
+
+# Bundled, fictional demo library (metadata but no generated thumbnails).
 !demo-gallery/
 !demo-gallery/**/
 !demo-gallery/**/*.svg
@@ -12,5 +18,21 @@ __gallery/*
 !demo-gallery/__gallery/data/favorites.txt
 !demo-gallery/__gallery/data/tags.tsv
 !demo-gallery/__gallery/data/albums/*.txt
-# Any generated demo thumbnails / media indexes remain ignored.
 !demo-gallery/__gallery/data/tag-catalog.txt
+
+# Public documentation and CI-generated screenshots.
+!docs/
+!docs/REFERENCE.md
+!docs/media/
+!docs/media/*.svg
+!docs/screenshots/
+!docs/screenshots/*.png
+
+# Development-only source: tracked in Git, excluded from packaged ZIPs.
+!.github/
+!.github/workflows/
+!.github/workflows/*.yml
+!scripts/
+!scripts/*.mjs
+!tests/
+!tests/*.test.mjs
