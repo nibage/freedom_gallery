@@ -5,11 +5,12 @@ import assert from 'node:assert/strict';
 const html=readFileSync(new URL('../__gallery/index.html',import.meta.url),'utf8');
 const js=html.match(/<script>([\s\S]*?)<\/script>/i)?.[1];
 test('inline JS parses',()=>{assert.ok(js);assert.doesNotThrow(()=>new Function(js))});
-test('filter controls grow with text and align to the tallest row item',()=>{
-  assert.match(html,/\.filters\s*\{align-items:stretch;\}/);
-  assert.match(html,/min-height:52px!important;/);
-  assert.match(html,/height:auto!important;/);
-  assert.match(html,/max-height:none!important;/);
+test('filter controls match compact header buttons without clipping',()=>{
+  assert.match(html,/\.top > \.filters > :is\(#query,#folder,#kind,#layoutToggle,\.folder-lock\)/);
+  assert.match(html,/height:38px!important;/);
+  assert.match(html,/min-height:38px!important;/);
+  assert.match(html,/font-size:13px!important;/);
+  assert.match(html,/min-width:184px;/);
 });
 test('viewer membership changes only through the green + or - button',()=>{
   const src=js.slice(js.indexOf('function renderViewerCollections(){'),js.indexOf('async function viewerNewCollection(){'));

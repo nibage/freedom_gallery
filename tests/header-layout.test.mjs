@@ -25,10 +25,11 @@ test('filter toolbar is no longer a separately sticky main element',()=>{
   assert.match(html,/@media\(max-width:680px\)/);
 });
 
-test('search stays compact and results are readable on hover',()=>{
-  assert.match(html,/\.top\s*>\s*\.filters\s*>\s*#query\s*\{[\s\S]*?max-width:240px/);
-  assert.match(html,/max-width:260px/);
-  assert.match(html,/node\.title=node\.textContent/);
+test('search is wider, results stay visible and details appear on hover',()=>{
+  assert.match(html,/max-width:440px/);
+  assert.match(html,/max-width:540px/);
+  assert.match(html,/node\.textContent=filtered\.length\.toLocaleString/);
+  assert.match(html,/node\.title=prefix\+filtered\.length/);
   assert.match(html,/el\('libraryName'\)\.title=picked\.name/);
 });
 
