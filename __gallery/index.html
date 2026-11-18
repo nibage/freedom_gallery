@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.9</title>
+<title>Local Media Gallery v7.9.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%231b1e24%22%2F%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2218%22%20width%3D%2237%22%20height%3D%2232%22%20rx%3D%225%22%20fill%3D%22%2330353d%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%20opacity%3D%220.83%22%2F%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2212%22%20width%3D%2238%22%20height%3D%2237%22%20rx%3D%226%22%20fill%3D%22%23262a31%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2223%22%20r%3D%225%22%20fill%3D%22%23f6a622%22%2F%3E%0A%3Cpath%20d%3D%22M21%2043%2030%2030%2037%2037%2043%2032%2051%2043Z%22%20fill%3D%22%23f3f4f5%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
@@ -785,6 +785,149 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     max-width:none;
   }
 }
+
+/* v7.9.1: one-row desktop header, prioritizing complete counts and actions.
+   Search occupies ALL available space; it never forces Theme onto another line. */
+@media (min-width:1800px){
+  .top{
+    display:grid;
+    grid-template-columns:max-content minmax(0,1fr) max-content;
+    grid-template-areas:"brand filters actions";
+    align-items:center;
+    column-gap:10px;
+    padding:8px 14px;
+  }
+  .top-left{
+    grid-area:brand;
+    flex:none;
+    width:max-content;
+    min-width:0;
+    max-width:none;
+    overflow:visible;
+    white-space:nowrap;
+  }
+  .top-left #results{
+    flex:0 0 auto;
+    width:max-content;
+    min-width:max-content;
+    max-width:none!important;
+    overflow:visible;
+    text-overflow:clip;
+    white-space:nowrap;
+  }
+  .top > .filters{
+    grid-area:filters;
+    display:flex;
+    flex:1 1 auto;
+    min-width:0;
+    width:100%;
+    max-width:none;
+    gap:6px;
+    justify-content:flex-start;
+    flex-wrap:nowrap;
+  }
+  .top > .filters > #query{
+    flex:1 1 0%;
+    width:auto;
+    min-width:105px;
+    max-width:none;
+    margin:0;
+  }
+  .top > .filters > #folder{
+    flex:0 0 160px;
+    width:160px;
+    min-width:160px;
+    max-width:160px;
+  }
+  .top > .filters > .folder-lock{
+    flex:0 0 65px;
+    min-width:65px;
+    max-width:65px;
+  }
+  .top > .filters > #kind{
+    flex:0 0 176px;
+    width:176px;
+    min-width:176px;
+    max-width:176px;
+  }
+  .top > .filters > #layoutToggle{
+    flex:0 0 auto;
+    white-space:nowrap;
+    padding-inline:8px!important;
+  }
+  .top-right{
+    grid-area:actions;
+    display:flex;
+    flex:0 0 auto;
+    min-width:max-content;
+    max-width:none;
+    margin:0;
+    gap:6px;
+    justify-content:flex-end;
+    flex-wrap:nowrap;
+    white-space:nowrap;
+  }
+  .top-right #status{
+    flex:0 0 auto;
+    min-width:0;
+    max-width:none;
+    white-space:nowrap;
+  }
+  .top-right .recent-chooser{
+    flex:0 0 136px;
+    width:136px;
+    min-width:136px;
+    max-width:136px;
+  }
+  .top-right .theme-label{
+    flex:0 0 auto;
+    gap:5px;
+    white-space:nowrap;
+  }
+  .top-right #themeSelect{
+    flex:0 0 78px;
+    width:78px;
+    min-width:78px;
+    max-width:78px;
+  }
+}
+/* Below desktop width, keep a coherent two-row header instead of allowing
+   a partial row or overlapping controls. All details remain visible. */
+@media (min-width:1751px) and (max-width:1799px){
+  .top{
+    display:grid;
+    grid-template-columns:minmax(0,1fr) auto;
+    grid-template-areas:"brand actions" "filters filters";
+    row-gap:7px;
+  }
+  .top-left{grid-area:brand;max-width:none;min-width:0;width:100%;}
+  .top-right{grid-area:actions;margin:0;}
+  .top > .filters{grid-area:filters;min-width:0;width:100%;max-width:100%;}
+}
+@media (min-width:1250px) and (max-width:1799px){
+  .top-left{
+    flex:none;
+    width:max-content;
+    max-width:none;
+    overflow:visible;
+  }
+  .top-left #results{
+    flex:0 0 auto;
+    min-width:max-content;
+    width:max-content;
+    max-width:none!important;
+    overflow:visible;
+    text-overflow:clip;
+  }
+  .top-right{
+    flex-wrap:nowrap;
+    margin-left:auto;
+    min-width:max-content;
+    max-width:none;
+  }
+  .top-right #status{min-width:0;flex:0 0 auto;}
+}
+
 </style>
 </head>
 <body>

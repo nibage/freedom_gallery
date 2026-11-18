@@ -149,3 +149,7 @@ For the exhaustive feature history and older version notes, see [the archived te
 ## Privacy and license
 
 Your indexed files and original media remain on your computer; the app does not upload them. Browser read/write permission is needed because the gallery intentionally writes its **human-readable metadata** beside your media. See [LICENSE](LICENSE) for the repository's license.
+
+## v7.9.1 — Single-row widescreen header
+
+On **1800px and wider browser windows**, the gallery title, complete `results · showing / total files` counter, a flexible search input, folder/type selectors, Instagram toggle, `loaded from index` status, library picker, Remove/Open actions, and **Theme** all fit on **one nonwrapping header row**. The search input uses only the horizontal space left after keeping the counts, labels and buttons readable. On smaller screens, the controls use a coherent responsive two-row layout instead of clipping or overlapping. The data model, filters, saved metadata and index are unchanged.

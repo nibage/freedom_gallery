@@ -53,3 +53,14 @@ test('library name is not duplicated beside the results count',()=>{
   assert.match(html,/\.top-left #libraryName\{\s*display:none!important;/);
   assert.match(header,/id="recentFolders"/);
 });
+
+test('wide-screen header uses one grid row, protects full counts, and lets search fill leftovers',()=>{
+  assert.match(html,/@media \(min-width:1800px\)\{/);
+  assert.match(html,/grid-template-columns:max-content minmax\(0,1fr\) max-content;/);
+  assert.match(html,/grid-template-areas:"brand filters actions";/);
+  assert.match(html,/\.top-left #results\{[\s\S]*?min-width:max-content;[\s\S]*?overflow:visible;/);
+  assert.match(html,/\.top > \.filters > #query\{[\s\S]*?flex:1 1 0%;[\s\S]*?min-width:105px;[\s\S]*?max-width:none;/);
+  assert.match(html,/\.top-right\{[\s\S]*?flex-wrap:nowrap;/);
+  assert.match(html,/\.top-right #status\{[\s\S]*?min-width:0;/);
+  assert.match(html,/@media \(min-width:1751px\) and \(max-width:1799px\)/);
+});
