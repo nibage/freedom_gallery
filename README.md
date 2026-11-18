@@ -262,3 +262,9 @@ The filename search, **All folders**, folder lock, **Photos & videos**, and **In
 The search input is compact—up to **240px** on wide desktops and **260px** in medium-width header layouts, with flexible wrapping for narrow windows. All controls remain functional and stay together inside the one header as it scrolls. If the results count or library name is shortened to fit, hover to read the full text. Dark and light color schemes preserve readable control labels.
 
 Only layout/tooltip markup changed. Existing folder/tag/album filters, thumbnail caches, library metadata, and gallery operations are unchanged. Updating just `__gallery/index.html` is sufficient.
+
+## v7.8.1 — Uniform header control sizes
+
+The **All folders**, **Photos & videos**, search and Instagram mode controls now use the same compact **38px** height and **13px** text size as the header’s Open library / Remove library buttons. The media-type selector is widened to **184px** with sufficient padding for the full “Photos & videos” label and dropdown arrow, including on narrower screens. No filter functionality or metadata changes.
+
+The current library name is no longer displayed twice: it stays in the library chooser, but the duplicate label beside **▦ freedom_gallery** is visually hidden, giving the results count additional width so the total file count is easier to read. The results tooltip retains the full untruncated text where space is genuinely limited.

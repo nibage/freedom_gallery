@@ -37,3 +37,18 @@ test('inline gallery JavaScript still parses',()=>{
   assert.ok(script);
   assert.doesNotThrow(()=>new Function(script));
 });
+
+test('media-type selector is wide enough and matches top header buttons',()=>{
+  assert.match(html,/\.top > \.filters > #kind\{[\s\S]*?min-width:184px;/);
+  assert.match(html,/\.top > \.filters > :is\(#query,#folder,#kind,#layoutToggle,\.folder-lock\)[\s\S]*?height:38px!important;/);
+  assert.match(html,/font-size:13px!important;/);
+  assert.match(html,/Photos & videos/);
+});
+
+test('library name is not duplicated beside the results count',()=>{
+  const header=html.slice(html.indexOf('<header class="top">'),html.indexOf('</header>'));
+  assert.match(header,/id="results"/);
+  assert.match(header,/id="libraryName" hidden aria-hidden="true"/);
+  assert.match(html,/\.top-left #libraryName\{\s*display:none!important;/);
+  assert.match(header,/id="recentFolders"/);
+});

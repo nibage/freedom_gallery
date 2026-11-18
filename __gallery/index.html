@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.8</title>
+<title>Local Media Gallery v7.8.1</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%231b1e24%22%2F%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2218%22%20width%3D%2237%22%20height%3D%2232%22%20rx%3D%225%22%20fill%3D%22%2330353d%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%20opacity%3D%220.83%22%2F%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2212%22%20width%3D%2238%22%20height%3D%2237%22%20rx%3D%226%22%20fill%3D%22%23262a31%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2223%22%20r%3D%225%22%20fill%3D%22%23f6a622%22%2F%3E%0A%3Cpath%20d%3D%22M21%2043%2030%2030%2037%2037%2043%2032%2051%2043Z%22%20fill%3D%22%23f3f4f5%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
@@ -571,24 +571,31 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
 @media(max-width:840px){.top-right > button,.top-right > select,.top-right .theme-label select{height:38px}}
 
 
-/* v7.7.2: prevent native select labels from clipping when font size/zoom grows.
-   Every control in the same flex row stretches to its tallest natural height. */
-.filters {align-items:stretch;}
-.filters > input,.filters > select,.filters > button,.filters > .folder-lock {
+/* v7.8.1: match the compact controls on the right side of the header.
+   Native selects need smaller font + padding to fit completely within 38px. */
+.filters {align-items:center;}
+.top > .filters > :is(#query,#folder,#kind,#layoutToggle,.folder-lock) {
   box-sizing:border-box;
-  height:auto!important;
-  min-height:52px!important;
-  max-height:none!important;
-  align-self:stretch;
-  line-height:1.35;
+  height:38px!important;
+  min-height:38px!important;
+  max-height:38px!important;
+  align-self:center;
+  font-size:13px!important;
+  font-weight:400;
+  line-height:18px!important;
+  padding-block:8px!important;
+  border-radius:8px;
 }
-.filters > select {
-  padding-block:10px;
-  padding-inline:12px 34px;
-  font-size:inherit;
+.top > .filters > select {
+  padding-inline:10px 30px!important;
+  white-space:nowrap;
 }
-.filters > #kind {min-width:min(195px,100%);}
-.filters > .folder-lock {display:inline-flex;align-items:center;justify-content:center;}
+.top > .filters > #query {padding-inline:10px!important;}
+.top > .filters > .folder-lock {
+  display:inline-flex;align-items:center;justify-content:center;
+  padding-inline:8px!important;
+}
+.top > .filters > #layoutToggle {padding-inline:10px!important;}
 /* The green viewer + / - is its own real button; text selects the row only. */
 .viewer .viewer-membership-row .viewer-list-action {
   pointer-events:auto!important;
@@ -633,12 +640,7 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
   white-space:nowrap;
 }
 .top-left #libraryName{
-  flex:0 1 140px;
-  min-width:0;
-  max-width:140px;
-  overflow:hidden;
-  text-overflow:ellipsis;
-  white-space:nowrap;
+  display:none!important; /* Name already shown in the library dropdown. */
 }
 .top > .filters{
   position:static!important;
@@ -675,10 +677,10 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
   padding-inline:7px;
 }
 .top > .filters > #kind{
-  flex:0 0 170px;
-  width:170px;
-  min-width:170px;
-  max-width:170px;
+  flex:0 0 184px;
+  width:184px;
+  min-width:184px;
+  max-width:184px;
 }
 .top > .filters > #layoutToggle{
   flex:0 0 auto;
@@ -732,7 +734,7 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   .top > .filters{flex-wrap:wrap;justify-content:flex-start;}
   .top > .filters > #query{flex:1 1 180px;min-width:150px;max-width:none;margin-right:0;}
   .top > .filters > #folder{flex:1 1 180px;width:auto;max-width:none;}
-  .top > .filters > #kind{flex:1 1 160px;min-width:160px;max-width:none;width:auto;}
+  .top > .filters > #kind{flex:1 1 184px;min-width:184px;max-width:none;width:auto;}
   .top > .filters > #layoutToggle{flex:0 0 auto;}
 }
 @media(max-width:680px){
@@ -744,7 +746,7 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   }
   .top-left{min-width:0;gap:7px;}
   .top-left h1{font-size:17px;}
-  .top-left #libraryName{max-width:100px;}
+
   .top-right{justify-content:flex-start;gap:6px;}
   .top > .filters > #query{flex:1 1 100%;max-width:none;}
 }
@@ -754,7 +756,7 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
 <body>
 <header class="top">
   <div class="top-left">
-    <h1>▦ freedom_gallery</h1><span id="results" class="results-header" aria-live="polite">Choose a media library folder.</span><span class="small" id="libraryName">No library selected</span>
+    <h1>▦ freedom_gallery</h1><span id="results" class="results-header" aria-live="polite">Choose a media library folder.</span><span class="small" id="libraryName" hidden aria-hidden="true">No library selected</span>
   </div>
   <div class="filters">
     <input id="query" type="search" placeholder="Search… (/)" title="Search filename, path or tag; press / to focus" aria-label="Search media">
