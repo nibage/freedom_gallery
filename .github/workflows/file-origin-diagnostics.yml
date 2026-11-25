@@ -1,0 +1,27 @@
+name: Diagnose file URL library persistence
+
+on:
+  pull_request:
+    paths:
+      - 'scripts/diagnose-file-origin.mjs'
+      - '.github/workflows/file-origin-diagnostics.yml'
+      - '__gallery/index.html'
+
+permissions:
+  contents: read
+
+jobs:
+  local-file-test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install Playwright Chromium
+        run: |
+          npm install --no-save --no-package-lock playwright@1.56.1
+          npx playwright install chromium
+      - name: Probe file:// storage and actual gallery restart
+        timeout-minutes: 3
+        run: node scripts/diagnose-file-origin.mjs
