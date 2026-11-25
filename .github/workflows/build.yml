@@ -6,6 +6,10 @@ on:
     tags: ['v*']
     paths-ignore:
       - 'docs/screenshots/**'
+  pull_request:
+    branches: [main]
+    paths-ignore:
+      - 'docs/screenshots/**'
   workflow_dispatch:
 
 permissions:
@@ -41,6 +45,11 @@ jobs:
         timeout-minutes: 3
         run: node scripts/verify-library-restore.mjs
 
+      - name: Verify native folder handle persistence across Chromium sessions
+        if: steps.install_screenshots.outcome == 'success'
+        timeout-minutes: 3
+        run: node scripts/verify-local-launcher.mjs
+
       - name: Capture actual application screenshots using the included demo
         id: screenshots
         if: steps.install_screenshots.outcome == 'success'
@@ -62,6 +71,7 @@ jobs:
           fi
           mkdir -p dist .release-stage/__gallery .release-stage/docs
           cp __gallery/index.html .release-stage/__gallery/index.html
+          cp __gallery/gallery-local-server.cjs __gallery/start-gallery.cmd __gallery/start-gallery.sh .release-stage/__gallery/
           cp README.md LICENSE .release-stage/
           cp -R docs/media .release-stage/docs/
           cp docs/REFERENCE.md .release-stage/docs/REFERENCE.md

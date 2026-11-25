@@ -9,6 +9,9 @@
 !__gallery/
 __gallery/*
 !__gallery/index.html
+!__gallery/gallery-local-server.cjs
+!__gallery/start-gallery.cmd
+!__gallery/start-gallery.sh
 
 # Bundled, fictional demo library (metadata but no generated thumbnails).
 !demo-gallery/
