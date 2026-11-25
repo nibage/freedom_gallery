@@ -36,6 +36,11 @@ jobs:
           # Skip apt install --with-deps to avoid a long dependency update.
           npx playwright install chromium
 
+      - name: Verify real browser library restoration and dropdown loading
+        if: steps.install_screenshots.outcome == 'success'
+        timeout-minutes: 3
+        run: node scripts/verify-library-restore.mjs
+
       - name: Capture actual application screenshots using the included demo
         id: screenshots
         if: steps.install_screenshots.outcome == 'success'

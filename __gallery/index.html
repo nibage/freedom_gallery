@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.9.1</title>
+<title>Local Media Gallery v7.9.4</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%231b1e24%22%2F%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2218%22%20width%3D%2237%22%20height%3D%2232%22%20rx%3D%225%22%20fill%3D%22%2330353d%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%20opacity%3D%220.83%22%2F%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2212%22%20width%3D%2238%22%20height%3D%2237%22%20rx%3D%226%22%20fill%3D%22%23262a31%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2223%22%20r%3D%225%22%20fill%3D%22%23f6a622%22%2F%3E%0A%3Cpath%20d%3D%22M21%2043%2030%2030%2037%2037%2043%2032%2051%2043Z%22%20fill%3D%22%23f3f4f5%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
@@ -928,6 +928,9 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   .top-right #status{min-width:0;flex:0 0 auto;}
 }
 
+/* v7.9.4: one compact permission-retry button only while a saved library is pending. */
+.top-right #reconnectLibrary{flex:0 0 30px;min-width:30px;max-width:30px;height:38px;padding:5px 0;font-size:17px;line-height:1}
+.top-right #reconnectLibrary[hidden]{display:none!important}
 </style>
 </head>
 <body>
@@ -947,7 +950,8 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   </div>
   <div class="top-right">
     <span id="status" class="small">Ready</span>
-    <select id="recentFolders" class="recent-chooser" aria-label="Recently opened libraries" title="Recently used libraries" hidden><option value="">Recent libraries…</option></select>
+    <select id="recentFolders" class="recent-chooser" aria-label="Recently opened libraries" title="Recently used libraries" hidden><option value="">Select library…</option></select>
+    <button class="btn" id="reconnectLibrary" type="button" hidden title="Open the selected remembered library and request access if necessary" aria-label="Reconnect selected library">↻</button>
     <button class="btn" id="forget" hidden title="Remove the current library from this browser's remembered list. Files are unchanged.">Remove library</button>
     <button class="btn primary" id="openFolder">📁 Open library</button>
     <label class="theme-label" for="themeSelect">Theme
@@ -1117,6 +1121,15 @@ function applyTheme(mode){
 try{applyTheme(localStorage.getItem(THEME_KEY)||'system')}catch(_){applyTheme('system')}
 systemThemeQuery.addEventListener?.('change',()=>{if(themePreference==='system')applyTheme('system')});
 const PREFS_DB = 'portable-media-gallery-prefs-v6.2:' + GALLERY_URL;
+// A name is only a fallback label, never a substitute for a native browser handle.
+const LAST_LIBRARY_NAME_KEY='gallery-last-library-name:'+GALLERY_URL;
+let lastLibraryHint='';
+try{lastLibraryHint=localStorage.getItem(LAST_LIBRARY_NAME_KEY)||''}catch(_){}
+function rememberLibraryName(name){
+  if(!name)return;
+  lastLibraryHint=name;
+  try{localStorage.setItem(LAST_LIBRARY_NAME_KEY,name)}catch(_){}
+}
 function pickerIdFor(url){
   // The File System Access picker ID must be short and ASCII-safe.
   let hash=2166136261;
@@ -1153,7 +1166,7 @@ let saveQueue=Promise.resolve(), pendingSaves=0, bigURL=null, observer=null;
 const thumbs=new Map(), pendingThumbs=new Map(), thumbJobs=[];
 let thumbWorkers=0;
 let dirCache=new Map(),thumbIndex=new Map(),thumbDirty=false,thumbTimer=null;
-let recentLibraries=[],selectedLibraryId=null,prefsAvailable=true;
+let recentLibraries=[],selectedLibraryId=null,pendingLibraryId=null,prefsAvailable=true,libraryOpenToken=0;
 let fileInfo=new Map(), scanInProgress=false, fileInfoTimer=null, thumbResetting=false, deletingMedia=false;
 let configuredRootPath=''; // Human-readable user-entered location of the selected library, NOT exposed by the browser.
 // Selection is UI-only and never persisted; it is scoped to the visible Classic gallery.
@@ -1696,25 +1709,59 @@ function toggleLayout(){
   });
 }
 function renderRecents(){
-  const select=el('recentFolders');select.replaceChildren(new Option('Select library…',''));
+  const select=el('recentFolders'),retry=el('reconnectLibrary');
+  select.replaceChildren(new Option('Select library…',''));
   for(const entry of recentLibraries)select.add(new Option(entry.name,entry.id));
-  select.hidden=!recentLibraries.length;
-  select.value=recentLibraries.some(entry=>entry.id===selectedLibraryId)?selectedLibraryId:'';
-  el('forget').hidden=!selectedLibraryId;
+  // Persisted library labels and live library handles represent distinct state.
+  // Always display the actual open folder, even if IndexedDB is unavailable.
+  const activeEntry=root&&recentLibraries.find(e=>e.id===selectedLibraryId);
+  if(root&&!activeEntry)select.add(new Option(root.name+' (current session)','__current__'));
+  if(!root&&!recentLibraries.length&&lastLibraryHint)
+    select.add(new Option(lastLibraryHint+' (reselect folder)','__reselect__'));
+
+  const selected=root?(activeEntry?activeEntry.id:'__current__')
+    :(recentLibraries.some(e=>e.id===pendingLibraryId)?pendingLibraryId
+      :recentLibraries[0]?.id|| (lastLibraryHint?'__reselect__':''));
+  select.hidden=!(root||recentLibraries.length||lastLibraryHint);
+  select.value=selected;
+  retry.hidden=!!root||!selected;
+  retry.disabled=!selected;
+  retry.title=selected==='__reselect__'
+    ?'Re-select “'+lastLibraryHint+'” using the system folder picker'
+    :'Open “'+(recentLibraries.find(e=>e.id===selected)?.name||'the last library')+'” and request permission';
+  select.title=root?'Open library: '+root.name
+    :selected?'Last library is remembered but not loaded. Use ↻ to reconnect if necessary.'
+      :'Select a library';
+  el('forget').hidden=!activeEntry;
 }
 async function rememberLibrary(handle){
-  if(!prefsAvailable)return;
+  if(!handle)return false;
+  rememberLibraryName(handle.name);
   try{
     let found=null;
-    for(const entry of recentLibraries){try{if(await entry.handle.isSameEntry(handle)){found=entry;break}}catch(_){}}
+    for(const entry of recentLibraries){
+      try{if(entry.handle&&await entry.handle.isSameEntry(handle)){found=entry;break}}catch(_){}
+    }
     const id=found?.id||'lib-'+Date.now()+'-'+Math.random().toString(36).slice(2,9);
     const item={id,name:handle.name,handle,lastUsed:Date.now()};
     await prefsOp('readwrite',store=>store.put(item));
     selectedLibraryId=id;
     recentLibraries=await getRecentLibraries();
-    for(const entry of recentLibraries.slice(MAX_RECENTS))await prefsOp('readwrite',store=>store.delete(entry.id));
-    recentLibraries=recentLibraries.slice(0,MAX_RECENTS);renderRecents();
-  }catch(e){prefsAvailable=false;console.warn('Cannot remember libraries in browser:',e);toast('Browser could not save the recently used folder. Gallery still works.')}
+    if(!recentLibraries.some(entry=>entry.id===id&&entry.handle))
+      throw Error('Browser did not retain the folder handle');
+    for(const entry of recentLibraries.slice(MAX_RECENTS))
+      await prefsOp('readwrite',store=>store.delete(entry.id));
+    recentLibraries=recentLibraries.slice(0,MAX_RECENTS);
+    pendingLibraryId=null;
+    renderRecents();
+    return true;
+  }catch(e){
+    console.warn('Could not remember the library handle:',e);
+    selectedLibraryId=null;
+    renderRecents();
+    toast('The folder is open, but the browser did not save it: '+e.message);
+    return false;
+  }
 }
 async function forgetLibraries(){
   if(!selectedLibraryId)return;
@@ -1722,7 +1769,10 @@ async function forgetLibraries(){
   if(!await galleryCollectionDialog({title:'Remove remembered library?',message:`Remove “${entry?.name||'this library'}” from this browser's remembered libraries?\n\nFiles on disk remain unchanged; the currently open library stays open.`,action:'Remove library',danger:true}))return;
   try{
     await prefsOp('readwrite',store=>store.delete(selectedLibraryId));
-    selectedLibraryId=null;recentLibraries=await getRecentLibraries();renderRecents();
+    selectedLibraryId=null;
+    recentLibraries=await getRecentLibraries();
+    // Keep the active folder visible as a session-only entry.
+    renderRecents();
     toast('Saved library shortcut removed; the currently open library is unchanged.');
   }catch(e){toast('Could not remove library shortcut: '+e.message)}
 }
@@ -1730,7 +1780,11 @@ async function activateLibrary(picked){
   if(thumbResetting||deletingMedia)throw Error('Wait for the current gallery maintenance operation to finish.');
   await flushThumbManifest();await saveQueue.catch(()=>{});
   scanNo++;clearTimeout(fileInfoTimer);if(el('viewer').open)closeViewer();clearThumbs();
-  clearSelection();lastUndo=null;root=picked;configuredRootPath='';dirCache=new Map([['',picked]]);images=[];byPath.clear();
+  clearSelection();lastUndo=null;root=picked;selectedLibraryId=null;pendingLibraryId=null;
+  rememberLibraryName(picked.name);
+  configuredRootPath='';dirCache=new Map([['',picked]]);images=[];byPath.clear();
+  // Reflect the selected folder immediately, not only after IndexedDB completes.
+  renderRecents();
   el('libraryName').textContent=picked.name;el('libraryName').title=picked.name;activeView={type:'all'};visibleCount=80;
   el('folder').value='';el('kind').value='';el('query').value='';setStatus('Loading metadata…');
   await loadMetadata();await loadFullPathConfig();await autoConfigureFullPath();await loadThumbManifest();await loadFileInfo();
@@ -1739,36 +1793,97 @@ async function activateLibrary(picked){
   updateMaintenance();
 }
 async function openRemembered(entry,allowPrompt=true){
-  if(!entry?.handle)return;
+  if(!entry?.handle)return false;
+  const token=++libraryOpenToken;
   try{
-    // Keep requestPermission directly in the click handler's activation chain.
-    const status=allowPrompt?await entry.handle.requestPermission({mode:'readwrite'}):await entry.handle.queryPermission({mode:'readwrite'});
+    // The request must be made directly in the user click/change handler.
+    // At page startup only queryPermission is permitted without a gesture.
+    const status=allowPrompt
+      ?await entry.handle.requestPermission({mode:'readwrite'})
+      :await entry.handle.queryPermission({mode:'readwrite'});
     if(status!=='granted'){
-      toast('This library needs permission. Select it in the Recent libraries dropdown to grant access.');return false;
+      if(allowPrompt)toast('Permission was not granted. Try ↻ or Open library.');
+      return false;
     }
+    if(token!==libraryOpenToken||(!allowPrompt&&root))return false;
     if(!await confirmLibrarySelection(entry.handle))return false;
-    await activateLibrary(entry.handle);await rememberLibrary(entry.handle);return true;
-  }catch(e){toast('Could not restore library: '+e.message);return false}
+    if(token!==libraryOpenToken||(!allowPrompt&&root))return false;
+    await activateLibrary(entry.handle);
+    await rememberLibrary(entry.handle);
+    return true;
+  }catch(e){
+    console.warn('Could not reopen remembered library:',e);
+    if(allowPrompt)toast('Cannot reopen “'+entry.name+'”: '+e.message+'. Use Open library if needed.');
+    return false;
+  }
 }
 async function restoreRecents(){
   if(!window.showDirectoryPicker)return;
   try{
-    recentLibraries=await getRecentLibraries();renderRecents();
+    const found=await getRecentLibraries();
+    if(root)return; // Never replace a folder chosen while IndexedDB was opening.
+    recentLibraries=found;
+    pendingLibraryId=recentLibraries[0]?.id||null;
+    renderRecents(); // The last library is visible even if permission has expired.
     if(recentLibraries.length){
-      const ok=await openRemembered(recentLibraries[0],false);
-      if(!ok)setStatus('Choose the previous library from the dropdown to grant access');
+      const last=recentLibraries[0],ok=await openRemembered(last,false);
+      if(!ok&&!root){
+        pendingLibraryId=last.id;renderRecents();
+        setStatus('Permission needed');
+        el('status').title='Select “'+last.name+'” or press ↻ to request access. The browser may require renewed permission.';
+      }
+    }else if(lastLibraryHint){
+      setStatus('Reconnect library');
+      el('status').title='The browser remembered only the name “'+lastLibraryHint+'”. Use ↻ to reselect this folder.';
     }
-  }catch(e){prefsAvailable=false;console.warn('Library history unavailable:',e)}
+  }catch(e){
+    console.warn('Recent library history unavailable:',e);
+    if(!root){
+      renderRecents();
+      setStatus('Recent libraries unavailable');
+      el('status').title='Browser storage unavailable: '+e.message+'. Use Open library to reconnect.';
+    }
+  }
+}
+async function selectRememberedLibrary(id){
+  if(root&&id==='__current__'){renderRecents();return true}
+  if(!id){renderRecents();return false}
+  if(id==='__reselect__'){
+    await chooseFolder();
+    renderRecents();
+    return !!root;
+  }
+  const entry=recentLibraries.find(item=>item.id===id);
+  if(!entry){renderRecents();return false}
+  if(!entry.handle||typeof entry.handle.requestPermission!=='function'){
+    toast('The saved folder handle is unavailable. Please select the library again.');
+    await chooseFolder();
+    renderRecents();
+    return !!root;
+  }
+  // An existing selection must also be actionable using ↻ (native selects
+  // do not fire change when the user chooses the same option again).
+  pendingLibraryId=id;
+  const ok=await openRemembered(entry,true);
+  if(!ok&&!root){
+    setStatus('Permission needed');
+    el('status').title='Use ↻ to retry “'+entry.name+'” or Open library to select the folder again.';
+  }
+  renderRecents();
+  return ok;
 }
 async function chooseFolder(){
   if(!window.showDirectoryPicker){toast('Use Chrome or Edge with local folder access enabled.');return}
+  const token=++libraryOpenToken;
   try{
-    const last=recentLibraries[0]?.handle;
+    const last=recentLibraries.find(e=>e.id===(pendingLibraryId||selectedLibraryId))?.handle||recentLibraries[0]?.handle;
     const opts={mode:'readwrite',id:PICKER_ID};
-    if(last)opts.startIn=last;
+    if(last?.kind==='directory'&&typeof last.queryPermission==='function')opts.startIn=last;
     const picked=await window.showDirectoryPicker(opts);
+    if(token!==libraryOpenToken)return;
     if(!await confirmLibrarySelection(picked))return;
-    await activateLibrary(picked);await rememberLibrary(picked);
+    await activateLibrary(picked);
+    await rememberLibrary(picked);
   }catch(e){if(e.name!=='AbortError'){toast('Could not open library: '+e.message);setStatus('Error');console.error(e)}}
 }
 function navButtonActive(){
@@ -3096,7 +3211,8 @@ el('gallery').closest('main').addEventListener('contextmenu',e=>{
   updateSelectionActionHints();
 });
 el('openFolder').onclick=chooseFolder;el('openFolder2').onclick=chooseFolder;
-el('recentFolders').onchange=async e=>{ const entry=recentLibraries.find(x=>x.id===e.target.value); if(entry)await openRemembered(entry); else { await chooseFolder(); renderRecents(); } };
+el('recentFolders').onchange=e=>{void selectRememberedLibrary(e.target.value)};
+el('reconnectLibrary').onclick=()=>{void selectRememberedLibrary(el('recentFolders').value)};
 el('forget').onclick=forgetLibraries;
 el('rescan').onclick=()=>void scan(true);
 el('navAll').onclick=()=>changeView('all'); el('navFav').onclick=e=>{ if(e.target.closest('.row-plus')) return; chooseSpecialView('favorites'); }; el('navTrash').onclick=e=>{ if(e.target.closest('.row-plus')) return; chooseSpecialView('trash'); };
