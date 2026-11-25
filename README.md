@@ -2,7 +2,7 @@
 
 # freedom_gallery
 
-**Current version: v7.9.1**
+**Current version: v7.9.4**
 
 **Your pictures. Your folders. Your freedom.**
 
@@ -19,20 +19,20 @@ Browse thousands of files, build albums and tags, and keep ownership of your ori
 | :-- | :-- | :-- | :-- |
 | Leave photos and videos in their existing directories. | No server, cloud account, database, or upload. | Favorites, reusable tags, virtual albums, and fast filters. | Light/dark themes, Classic and Instagram layouts, keyboard shortcuts. |
 
-### Screenshots — v7.9.1
+### Screenshots — v7.9.4
 
 These screenshots show the **actual current application**, captured automatically in Chromium at **2048 × 1080** using the included fictional demo library. No personal photos are used.
 
 | Dark mode | Light mode | Instagram mode |
 | :--: | :--: | :--: |
-| ![Freedom Gallery v7.9.1 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.1 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.1 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
+| ![Freedom Gallery v7.9.4 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.4 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.4 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
 | Charcoal interface and warm orange accents. | Light interface with burgundy accents. | Edge-to-edge, square photo tiles in the dark theme. |
 
 All three screenshots show the current gallery's compact single-row header, with its results count, search, folder/type filters, library controls and Theme selector.
 
 ### Latest release highlights
 
-**v7.9.1** keeps the complete **results · showing / total files** counter visible on widescreen monitors. The search field expands to use the remaining space without pushing Theme onto a second line. At smaller window sizes the same header adapts responsively.
+**v7.9.4** retains the responsive, single-line widescreen header from v7.9.1 and fixes library reopening. The most recently used library is selected in the dropdown on startup and is opened automatically when its saved filesystem permission is still granted. If Chrome/Edge requires renewed permission, the library remains visible and a compact **↻** button lets you reconnect it explicitly.
 
 ### See how it works
 
@@ -70,6 +70,10 @@ Pictures/
 
 Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edge**. Choose **Open library** and select `Pictures`, not `__gallery`; grant the browser read/write permission when requested. A first-time scan creates local metadata under `__gallery/data/`. Later openings reuse the saved index when the browser permits access.
 
+**Reopening your library:** The gallery saves recent native folder handles in this browser's IndexedDB. On startup, it selects the last-used folder and actually loads its photos **when the browser already grants read/write access**. If access requires renewed permission, the folder name stays selected and the status says **Permission needed**. Click **↻** next to the library selector, or select another remembered folder, to request access and load the gallery. Choosing the same already-selected option in a native dropdown doesn't fire a change event; ↻ is the reliable retry action.
+
+If browser storage cannot retain the native folder handle, the gallery shows **`Folder name (current session)`** after manual opening and a warning. On the next launch it can show **`Folder name (reselect folder)`**, which opens the system picker; a remembered name alone cannot reopen files. If Chrome offers **Allow on every visit** when approving folder access, use that option to keep permission across sessions. The browser may require approval again, especially with locally opened `file://` pages; the gallery cannot override that security requirement. See [Chrome's file permission documentation](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api).
+
 **Browser support:** Chrome and Edge use the File System Access API. Firefox does not provide the persistent writable-folder access required by this application. It runs locally on supported versions of Windows, Linux, and macOS; browser permissions are specific to each machine.
 
 **Updating:** Replace only `__gallery/index.html`. Keep `__gallery/data/`, which holds your favorites, tags, albums, and thumbnails. Updating the HTML alone does not require a reindex or thumbnail rebuild.
@@ -81,6 +85,7 @@ Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edg
 | **Search** | Find items by filename, path, or tag. The header shows only `82 results · showing 80 / 76 034 files` (example); hover for detailed filter matches. |
 | **All folders / Fix folder** | Browse one folder and its descendants; lock the folder scope while selecting collections. |
 | **Photos & videos** | Show all supported media, only photos, or only videos. |
+| **Select library… / ↻** | The last library is selected on startup; if it wasn't loaded because permission is missing, click ↻ to request access and actually reopen it. |
 | **Classic / Instagram mode** | Switch between labeled thumbnails and a compact, gapless square grid. |
 | **Albums / Tags · OFF** | Select one album *or* one tag. |
 | **Albums / Tags · OR** | Show media matching **any** selected album, tag, Favorites, or Trash category. |
@@ -143,7 +148,7 @@ The workflow creates two ZIP files:
 
 Neither archive includes `.github/`, `tests/`, `scripts/`, `.gitignore`, Node dependencies, temporary caches, or other development helpers. Each `main` build provides a downloadable GitHub Actions artifact; a `v*` tag additionally publishes direct ZIP assets to GitHub Releases.
 
-The workflow captures **three README screenshots** (Dark, Light and Instagram mode) from the current gallery and its bundled demo. It removes obsolete screenshots so only these three current images are published in `docs/screenshots/`. The build can still produce ZIPs if optional screenshot capture is unavailable.
+The workflow checks remembered-folder recovery in a real Chromium browser, then captures **three README screenshots** (Dark, Light and Instagram mode) from the current gallery and its bundled demo. It removes obsolete screenshots so only these three current images are published in `docs/screenshots/`. The build can still produce ZIPs if optional screenshot capture is unavailable.
 
 **Branch housekeeping:** A separate GitHub Actions workflow automatically deletes same-repository `feature/`, `fix/` and `docs/` branches after their pull requests have been merged, but only if they are unchanged and unused by open pull requests. Active work and `main` are preserved.
 
