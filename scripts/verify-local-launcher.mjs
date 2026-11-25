@@ -75,6 +75,10 @@ try{
   page=await openSession();
   await page.waitForFunction(()=>typeof images!=='undefined'&&images.length===12&&root?.name==='Pictures-special',
     null,{timeout:15000});
+  // The gallery renders cards *before* the saved library handle is re-verified
+  // and the dropdown repainted. Wait for the complete restoration transaction.
+  await page.waitForFunction(()=>document.getElementById('recentFolders')?.value?.startsWith('lib-'),
+    null,{timeout:10000});
   const restored=await page.evaluate(async()=>({
     name:root?.name,loaded:images.length,
     selected:document.getElementById('recentFolders').value,
