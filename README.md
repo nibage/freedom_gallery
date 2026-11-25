@@ -2,7 +2,7 @@
 
 # freedom_gallery
 
-**Current version: v7.9.1**
+**Current version: v7.9.2**
 
 **Your pictures. Your folders. Your freedom.**
 
@@ -19,20 +19,20 @@ Browse thousands of files, build albums and tags, and keep ownership of your ori
 | :-- | :-- | :-- | :-- |
 | Leave photos and videos in their existing directories. | No server, cloud account, database, or upload. | Favorites, reusable tags, virtual albums, and fast filters. | Light/dark themes, Classic and Instagram layouts, keyboard shortcuts. |
 
-### Screenshots — v7.9.1
+### Screenshots — v7.9.2
 
 These screenshots show the **actual current application**, captured automatically in Chromium at **2048 × 1080** using the included fictional demo library. No personal photos are used.
 
 | Dark mode | Light mode | Instagram mode |
 | :--: | :--: | :--: |
-| ![Freedom Gallery v7.9.1 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.1 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.1 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
+| ![Freedom Gallery v7.9.2 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.2 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.2 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
 | Charcoal interface and warm orange accents. | Light interface with burgundy accents. | Edge-to-edge, square photo tiles in the dark theme. |
 
 All three screenshots show the current gallery's compact single-row header, with its results count, search, folder/type filters, library controls and Theme selector.
 
 ### Latest release highlights
 
-**v7.9.1** keeps the complete **results · showing / total files** counter visible on widescreen monitors. The search field expands to use the remaining space without pushing Theme onto a second line. At smaller window sizes the same header adapts responsively.
+**v7.9.2** keeps the complete **results · showing / total files** counter visible on widescreen monitors, with a flexible search field. It also improves reopening your last photo library: when Chrome/Edge still grants access, the gallery restores the most recently opened folder automatically. When browser permission is missing, the library selector stays retryable and the status reads **Permission needed**.
 
 ### See how it works
 
@@ -70,6 +70,8 @@ Pictures/
 
 Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edge**. Choose **Open library** and select `Pictures`, not `__gallery`; grant the browser read/write permission when requested. A first-time scan creates local metadata under `__gallery/data/`. Later openings reuse the saved index when the browser permits access.
 
+**Reopening a library:** The app remembers recently opened folder handles in this browser (IndexedDB) and tries to reopen the last-used one automatically. This succeeds without interaction **only while the browser still grants read/write permission**. If permission has expired (often after restarting Chrome/Edge), the status says **Permission needed**. Choose the library from **Select library…** to request access again; you can choose that **same item repeatedly** if a request was declined. If the browser blocks the request or the folder was moved, use **Open library** to select it again. This is a browser security requirement, not a gallery index problem. The list is specific to the local `index.html` file's location, so moving or renaming that HTML file can create a separate remembered-library list.
+
 **Browser support:** Chrome and Edge use the File System Access API. Firefox does not provide the persistent writable-folder access required by this application. It runs locally on supported versions of Windows, Linux, and macOS; browser permissions are specific to each machine.
 
 **Updating:** Replace only `__gallery/index.html`. Keep `__gallery/data/`, which holds your favorites, tags, albums, and thumbnails. Updating the HTML alone does not require a reindex or thumbnail rebuild.
@@ -81,6 +83,7 @@ Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edg
 | **Search** | Find items by filename, path, or tag. The header shows only `82 results · showing 80 / 76 034 files` (example); hover for detailed filter matches. |
 | **All folders / Fix folder** | Browse one folder and its descendants; lock the folder scope while selecting collections. |
 | **Photos & videos** | Show all supported media, only photos, or only videos. |
+| **Select library… / Open library** | Reopen a remembered library (requesting permission if needed) or choose a folder manually. The most recent permitted library is restored automatically. |
 | **Classic / Instagram mode** | Switch between labeled thumbnails and a compact, gapless square grid. |
 | **Albums / Tags · OFF** | Select one album *or* one tag. |
 | **Albums / Tags · OR** | Show media matching **any** selected album, tag, Favorites, or Trash category. |
