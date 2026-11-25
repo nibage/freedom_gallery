@@ -2,7 +2,7 @@
 
 # freedom_gallery
 
-**Current version: v7.9.2**
+**Current version: v7.9.3**
 
 **Your pictures. Your folders. Your freedom.**
 
@@ -19,20 +19,20 @@ Browse thousands of files, build albums and tags, and keep ownership of your ori
 | :-- | :-- | :-- | :-- |
 | Leave photos and videos in their existing directories. | No server, cloud account, database, or upload. | Favorites, reusable tags, virtual albums, and fast filters. | Light/dark themes, Classic and Instagram layouts, keyboard shortcuts. |
 
-### Screenshots — v7.9.2
+### Screenshots — v7.9.3
 
 These screenshots show the **actual current application**, captured automatically in Chromium at **2048 × 1080** using the included fictional demo library. No personal photos are used.
 
 | Dark mode | Light mode | Instagram mode |
 | :--: | :--: | :--: |
-| ![Freedom Gallery v7.9.2 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.2 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.2 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
+| ![Freedom Gallery v7.9.3 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.3 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.3 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
 | Charcoal interface and warm orange accents. | Light interface with burgundy accents. | Edge-to-edge, square photo tiles in the dark theme. |
 
 All three screenshots show the current gallery's compact single-row header, with its results count, search, folder/type filters, library controls and Theme selector.
 
 ### Latest release highlights
 
-**v7.9.2** keeps the complete **results · showing / total files** counter visible on widescreen monitors, with a flexible search field. It also improves reopening your last photo library: when Chrome/Edge still grants access, the gallery restores the most recently opened folder automatically. When browser permission is missing, the library selector stays retryable and the status reads **Permission needed**.
+**v7.9.3** retains the compact widescreen header and fixes the recent-library dropdown: your currently opened folder is displayed immediately, even if browser storage fails. The last folder can reopen automatically when permission is already granted. If browser storage or filesystem permission is unavailable, the app now explains why it cannot reopen the folder and provides a reconnect path.
 
 ### See how it works
 
@@ -70,7 +70,9 @@ Pictures/
 
 Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edge**. Choose **Open library** and select `Pictures`, not `__gallery`; grant the browser read/write permission when requested. A first-time scan creates local metadata under `__gallery/data/`. Later openings reuse the saved index when the browser permits access.
 
-**Reopening a library:** The app remembers recently opened folder handles in this browser (IndexedDB) and tries to reopen the last-used one automatically. This succeeds without interaction **only while the browser still grants read/write permission**. If permission has expired (often after restarting Chrome/Edge), the status says **Permission needed**. Choose the library from **Select library…** to request access again; you can choose that **same item repeatedly** if a request was declined. If the browser blocks the request or the folder was moved, use **Open library** to select it again. This is a browser security requirement, not a gallery index problem. The list is specific to the local `index.html` file's location, so moving or renaming that HTML file can create a separate remembered-library list.
+**Reopening a library:** The gallery stores recent folder handles in the current browser profile (IndexedDB). On reopening, it automatically loads the most recent library **only when the browser still grants read/write access**. If the browser requires renewed permission, select the remembered folder in **Select library…**. Chrome may offer **Allow on every visit** instead of **Allow this time**—choose the persistent option if you trust the gallery and want to avoid repeated prompts. Not every browser/origin offers that option; the app cannot grant itself file access. [Chrome's guide to persistent file permissions](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api).
+
+**If “Select library…” remains visible:** When a folder is open, its name should now appear immediately. If IndexedDB cannot save its folder handle, the dropdown displays **`Folder name (current session)`** and shows a warning; you can still use the gallery, but browser-based automatic restore won't work until storage is available. As a fallback, the gallery remembers the **folder name only** in localStorage; on the next visit it appears as **`Folder name (reconnect)`**, which opens the system folder picker. A saved name does not grant filesystem access. Browser storage may be disabled or cleared in private mode. Folder history is tied to the location of this `index.html` file, so moving or renaming it creates a separate history.
 
 **Browser support:** Chrome and Edge use the File System Access API. Firefox does not provide the persistent writable-folder access required by this application. It runs locally on supported versions of Windows, Linux, and macOS; browser permissions are specific to each machine.
 
