@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Local Media Gallery v7.9.1</title>
+<title>Local Media Gallery v7.9.2</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2064%2064%22%3E%0A%3Crect%20width%3D%2264%22%20height%3D%2264%22%20rx%3D%2215%22%20fill%3D%22%231b1e24%22%2F%3E%0A%3Crect%20x%3D%2210%22%20y%3D%2218%22%20width%3D%2237%22%20height%3D%2232%22%20rx%3D%225%22%20fill%3D%22%2330353d%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%20opacity%3D%220.83%22%2F%3E%0A%3Crect%20x%3D%2217%22%20y%3D%2212%22%20width%3D%2238%22%20height%3D%2237%22%20rx%3D%226%22%20fill%3D%22%23262a31%22%20stroke%3D%22%23f6a622%22%20stroke-width%3D%223%22%2F%3E%0A%3Ccircle%20cx%3D%2243%22%20cy%3D%2223%22%20r%3D%225%22%20fill%3D%22%23f6a622%22%2F%3E%0A%3Cpath%20d%3D%22M21%2043%2030%2030%2037%2037%2043%2032%2051%2043Z%22%20fill%3D%22%23f3f4f5%22%2F%3E%0A%3C%2Fsvg%3E">
 <style>
   :root { color-scheme:dark; font-family:system-ui,-apple-system,'Segoe UI',sans-serif; --bg:#10141b; --panel:#19202b; --line:#2b3442; --muted:#a9b4c5; --accent:#9bbef8; --text:#f1f4fa; }
@@ -1206,7 +1206,7 @@ function syncFilterControls(){
 
 
 function typeOf(path){return IMAGE_EXT.test(path)?'image':VIDEO_EXT.test(path)?'video':null}
-function setStatus(s){el('status').textContent=s}
+function setStatus(s){const node=el('status');node.textContent=s;node.title=s}
 function toast(s){const n=el('toast');n.textContent=s;n.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>n.style.display='none',5500)}
 function lines(s){return s.split(/\r?\n/).map(x=>x.trim()).filter(x=>x&&!x.startsWith('#'))}
 function serializePaths(xs){return [...xs].sort((a,b)=>a.localeCompare(b,'cs')).join('\n')+(xs.size?'\n':'')}
@@ -1699,8 +1699,12 @@ function renderRecents(){
   const select=el('recentFolders');select.replaceChildren(new Option('Select library…',''));
   for(const entry of recentLibraries)select.add(new Option(entry.name,entry.id));
   select.hidden=!recentLibraries.length;
-  select.value=recentLibraries.some(entry=>entry.id===selectedLibraryId)?selectedLibraryId:'';
-  el('forget').hidden=!selectedLibraryId;
+  // A remembered handle is not necessarily an opened library: permission may
+  // have expired after restarting the browser. In that case leave the prompt
+  // selected so choosing the SAME folder again always triggers a change event.
+  const activeId=root&&recentLibraries.some(entry=>entry.id===selectedLibraryId)?selectedLibraryId:'';
+  select.value=activeId;
+  el('forget').hidden=!activeId;
 }
 async function rememberLibrary(handle){
   if(!prefsAvailable)return;
@@ -1739,26 +1743,59 @@ async function activateLibrary(picked){
   updateMaintenance();
 }
 async function openRemembered(entry,allowPrompt=true){
-  if(!entry?.handle)return;
+  if(!entry?.handle)return false;
   try{
-    // Keep requestPermission directly in the click handler's activation chain.
-    const status=allowPrompt?await entry.handle.requestPermission({mode:'readwrite'}):await entry.handle.queryPermission({mode:'readwrite'});
+    // Startup: query without a gesture; dropdown: request immediately in the
+    // change handler's user-activation chain, before any other async operation.
+    const status=allowPrompt
+      ?await entry.handle.requestPermission({mode:'readwrite'})
+      :await entry.handle.queryPermission({mode:'readwrite'});
     if(status!=='granted'){
-      toast('This library needs permission. Select it in the Recent libraries dropdown to grant access.');return false;
+      if(allowPrompt)toast('Access not granted. Use Open library to reconnect the folder if needed.');
+      return false;
     }
     if(!await confirmLibrarySelection(entry.handle))return false;
     await activateLibrary(entry.handle);await rememberLibrary(entry.handle);return true;
-  }catch(e){toast('Could not restore library: '+e.message);return false}
+  }catch(e){
+    console.warn('Could not reopen remembered library:',e);
+    if(allowPrompt)toast('Could not reopen library: '+e.message+'. Use Open library to reconnect.');
+    return false;
+  }
 }
 async function restoreRecents(){
   if(!window.showDirectoryPicker)return;
   try{
     recentLibraries=await getRecentLibraries();renderRecents();
     if(recentLibraries.length){
-      const ok=await openRemembered(recentLibraries[0],false);
-      if(!ok)setStatus('Choose the previous library from the dropdown to grant access');
+      // Most recently opened library is first. Automatic restore is possible
+      // only while Chrome/Edge still grants its stored handle permission.
+      const last=recentLibraries[0],ok=await openRemembered(last,false);
+      if(!ok){
+        renderRecents();
+        setStatus('Permission needed');
+        el('status').title='Select “'+last.name+'” in Select library to reconnect, or use Open library.';
+      }
     }
   }catch(e){prefsAvailable=false;console.warn('Library history unavailable:',e)}
+}
+async function selectRememberedLibrary(id){
+  const select=el('recentFolders');
+  // Reset immediately; if permission is denied, this same entry can be picked
+  // again without first selecting a different library.
+  select.value='';
+  const entry=recentLibraries.find(item=>item.id===id);
+  if(!entry){
+    await chooseFolder();
+    renderRecents();
+    return !!root;
+  }
+  const ok=await openRemembered(entry,true);
+  if(!ok&&!root){
+    setStatus('Permission needed');
+    el('status').title='Select “'+entry.name+'” again to retry, or use Open library.';
+  }
+  renderRecents();
+  return ok;
 }
 async function chooseFolder(){
   if(!window.showDirectoryPicker){toast('Use Chrome or Edge with local folder access enabled.');return}
@@ -3096,7 +3133,7 @@ el('gallery').closest('main').addEventListener('contextmenu',e=>{
   updateSelectionActionHints();
 });
 el('openFolder').onclick=chooseFolder;el('openFolder2').onclick=chooseFolder;
-el('recentFolders').onchange=async e=>{ const entry=recentLibraries.find(x=>x.id===e.target.value); if(entry)await openRemembered(entry); else { await chooseFolder(); renderRecents(); } };
+el('recentFolders').onchange=e=>{void selectRememberedLibrary(e.target.value)};
 el('forget').onclick=forgetLibraries;
 el('rescan').onclick=()=>void scan(true);
 el('navAll').onclick=()=>changeView('all'); el('navFav').onclick=e=>{ if(e.target.closest('.row-plus')) return; chooseSpecialView('favorites'); }; el('navTrash').onclick=e=>{ if(e.target.closest('.row-plus')) return; chooseSpecialView('trash'); };
