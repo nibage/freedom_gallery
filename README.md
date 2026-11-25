@@ -2,7 +2,7 @@
 
 # freedom_gallery
 
-**Current version: v7.9.4**
+**Current version: v7.9.5**
 
 **Your pictures. Your folders. Your freedom.**
 
@@ -17,22 +17,22 @@ Browse thousands of files, build albums and tags, and keep ownership of your ori
 
 | 📁 No lock-in | 📴 Works offline | 🏷️ Organize at scale | 🌗 Yours to customize |
 | :-- | :-- | :-- | :-- |
-| Leave photos and videos in their existing directories. | No server, cloud account, database, or upload. | Favorites, reusable tags, virtual albums, and fast filters. | Light/dark themes, Classic and Instagram layouts, keyboard shortcuts. |
+| Leave photos and videos in their existing directories. | No cloud account, remote server, media database, or upload. Optional local-only offline launcher. | Favorites, reusable tags, virtual albums, and fast filters. | Light/dark themes, Classic and Instagram layouts, keyboard shortcuts. |
 
-### Screenshots — v7.9.4
+### Screenshots — v7.9.5
 
 These screenshots show the **actual current application**, captured automatically in Chromium at **2048 × 1080** using the included fictional demo library. No personal photos are used.
 
 | Dark mode | Light mode | Instagram mode |
 | :--: | :--: | :--: |
-| ![Freedom Gallery v7.9.4 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.4 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.4 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
+| ![Freedom Gallery v7.9.5 — dark mode, complete single-row header and gallery](docs/screenshots/classic-dark.png) | ![Freedom Gallery v7.9.5 — light mode, complete single-row header and gallery](docs/screenshots/classic-light.png) | ![Freedom Gallery v7.9.5 — Instagram mode with square photo grid](docs/screenshots/instagram-dark.png) |
 | Charcoal interface and warm orange accents. | Light interface with burgundy accents. | Edge-to-edge, square photo tiles in the dark theme. |
 
 All three screenshots show the current gallery's compact single-row header, with its results count, search, folder/type filters, library controls and Theme selector.
 
 ### Latest release highlights
 
-**v7.9.4** retains the responsive, single-line widescreen header from v7.9.1 and fixes library reopening. The most recently used library is selected in the dropdown on startup and is opened automatically when its saved filesystem permission is still granted. If Chrome/Edge requires renewed permission, the library remains visible and a compact **↻** button lets you reconnect it explicitly.
+**v7.9.5** adds an **optional offline local launcher** for a stable browser origin on `127.0.0.1`. In Chromium, a native directory handle stored in IndexedDB was restored after restarting the browser when launched this way. Direct `index.html` opening remains supported, but browser permissions for local `file://` pages may behave differently. The compact header and the ↻ reconnect control are unchanged.
 
 ### See how it works
 
@@ -65,10 +65,25 @@ Pictures/
 ├── Trips/
 │   └── holiday.mp4
 └── __gallery/
-    └── index.html
+    ├── index.html
+    ├── start-gallery.cmd        # optional Windows offline launcher
+    ├── start-gallery.sh         # optional macOS / Linux launcher
+    └── gallery-local-server.cjs # optional Node.js loopback server
 ```
 
 Double-click `Pictures/__gallery/index.html` in **Google Chrome or Microsoft Edge**. Choose **Open library** and select `Pictures`, not `__gallery`; grant the browser read/write permission when requested. A first-time scan creates local metadata under `__gallery/data/`. Later openings reuse the saved index when the browser permits access.
+
+### Recommended: offline launcher with a stable local address
+
+If reopening saved libraries is unreliable when double-clicking a `file://` HTML page, try the optional local launcher. It uses **Node.js 20 or newer** (not included in the ZIP), works without internet, and serves **only `index.html`** on `127.0.0.1`. Photos, albums, tags and metadata are **never served over HTTP**; the browser still requests your explicit folder permission.
+
+**Windows:** Double-click `Pictures/__gallery/start-gallery.cmd`. A terminal window stays open while the server is running, and your default browser opens the gallery automatically.
+
+**macOS or Linux:** Run `sh Pictures/__gallery/start-gallery.sh` from your terminal (adjust the path as needed).
+
+The launcher uses a **stable, folder-specific port** so different installed copies of Freedom Gallery don't share the same browser shortcut database. The first time, choose your photo library again with **Open library**, even if you used the `file://` version previously—these are different browser origins. On subsequent launches, use the **same launcher, browser and profile**. If Chrome/Edge has retained read/write permission, the gallery opens the last library automatically; otherwise, use **↻** to request renewed access. The browser can still require confirmation and the app cannot bypass it.
+
+To stop the launcher, close its terminal window or press **Ctrl+C**. Direct double-clicking `index.html` remains available; the Node.js launcher is not required for any other gallery feature.
 
 **Reopening your library:** The gallery saves recent native folder handles in this browser's IndexedDB. On startup, it selects the last-used folder and actually loads its photos **when the browser already grants read/write access**. If access requires renewed permission, the folder name stays selected and the status says **Permission needed**. Click **↻** next to the library selector, or select another remembered folder, to request access and load the gallery. Choosing the same already-selected option in a native dropdown doesn't fire a change event; ↻ is the reliable retry action.
 
@@ -76,7 +91,7 @@ If browser storage cannot retain the native folder handle, the gallery shows **`
 
 **Browser support:** Chrome and Edge use the File System Access API. Firefox does not provide the persistent writable-folder access required by this application. It runs locally on supported versions of Windows, Linux, and macOS; browser permissions are specific to each machine.
 
-**Updating:** Replace only `__gallery/index.html`. Keep `__gallery/data/`, which holds your favorites, tags, albums, and thumbnails. Updating the HTML alone does not require a reindex or thumbnail rebuild.
+**Updating:** Replace `__gallery/index.html`. If you want to use the optional offline launcher, also copy `start-gallery.cmd`, `start-gallery.sh`, and `gallery-local-server.cjs` into the same `__gallery/` folder. Keep `__gallery/data/`, which holds your favorites, tags, albums, and thumbnails. No reindex or thumbnail rebuild is required.
 
 ## Main controls
 
@@ -143,12 +158,12 @@ Album membership and tag assignments are not removed merely because a photo move
 
 The workflow creates two ZIP files:
 
-- **freedom-gallery-*.zip** — clean application distribution: `__gallery/index.html`, this README, license, and marketing screenshots/illustrations.
+- **freedom-gallery-*.zip** — clean application distribution: `__gallery/index.html`, optional runtime launcher scripts, this README, license, and marketing screenshots/illustrations.
 - **freedom-gallery-demo-*.zip** — the same application **plus** the self-contained `demo-gallery/` sample library.
 
 Neither archive includes `.github/`, `tests/`, `scripts/`, `.gitignore`, Node dependencies, temporary caches, or other development helpers. Each `main` build provides a downloadable GitHub Actions artifact; a `v*` tag additionally publishes direct ZIP assets to GitHub Releases.
 
-The workflow checks remembered-folder recovery in a real Chromium browser, then captures **three README screenshots** (Dark, Light and Instagram mode) from the current gallery and its bundled demo. It removes obsolete screenshots so only these three current images are published in `docs/screenshots/`. The build can still produce ZIPs if optional screenshot capture is unavailable.
+The workflow checks remembered-folder recovery in Chromium both with the existing UI test and via a stable localhost launcher using a **real native directory handle across browser restarts**, then captures **three README screenshots** (Dark, Light and Instagram mode) from the current gallery and its bundled demo. It removes obsolete screenshots so only these three current images are published in `docs/screenshots/`. The build can still produce ZIPs if optional screenshot capture is unavailable.
 
 **Branch housekeeping:** A separate GitHub Actions workflow automatically deletes same-repository `feature/`, `fix/` and `docs/` branches after their pull requests have been merged, but only if they are unchanged and unused by open pull requests. Active work and `main` are preserved.
 
