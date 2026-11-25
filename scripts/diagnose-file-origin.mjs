@@ -1,4 +1,5 @@
 import { chromium } from 'playwright';
+import { createServer } from 'node:http';
 import { mkdtemp, readFile, mkdir, copyFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
@@ -82,6 +83,51 @@ try {
       await r.handle.queryPermission({mode:'readwrite'}).catch(e=>e.name+':'+e.message):'no method'))
   }));
   console.log('SCRIPT ERRORS',JSON.stringify(errors.slice(0,12)));
+
+  // Compare a stable trustworthy HTTP localhost origin against file://, using
+  // the exact same gallery HTML, browser context, native OPFS and IndexedDB.
+  const source=await readFile(join(appDir,'index.html'));
+  const httpServer=createServer((req,res)=>{
+    res.writeHead(200,{'content-type':'text/html; charset=utf-8'});
+    res.end(source);
+  });
+  await new Promise(resolve=>httpServer.listen(0,'127.0.0.1',resolve));
+  try{
+    const url='http://127.0.0.1:'+httpServer.address().port+'/';
+    await page.goto(url,{waitUntil:'domcontentloaded'});
+    await print('HTTP ORIGIN',()=>({origin:location.origin,protocol:location.protocol,secure:isSecureContext,idb:!!window.indexedDB}));
+    await print('HTTP OPFS',async()=>{
+      try{
+        const opfs=await navigator.storage.getDirectory();
+        const gallery=await opfs.getDirectoryHandle('Pictures-special',{create:true});
+        for(let i=0;i<12;i++){
+          const handle=await gallery.getFileHandle('photo-'+i+'.svg',{create:true});
+          const writer=await handle.createWritable();
+          await writer.write('<svg xmlns="http://www.w3.org/2000/svg" width="30" height="30"><rect width="30" height="30"/></svg>');
+          await writer.close();
+        }
+        return {kind:gallery.kind,name:gallery.name,write:await gallery.queryPermission({mode:'readwrite'})};
+      }catch(e){return {error:e.name,message:e.message}}
+    });
+    await print('HTTP PICK',async()=>{
+      try{
+        await chooseFolder();
+        return {root:root?.name,images:images.length,
+          saved:await getRecentLibraries().then(rs=>rs.map(e=>({name:e.name,kind:e.handle?.kind})))};
+      }catch(e){return {error:e.name,message:e.message}}
+    });
+    await page.waitForTimeout(900);
+    await print('HTTP AFTER PICK',()=>({root:root?.name,images:images.length,status:document.getElementById('status')?.textContent,
+      selected:document.getElementById('recentFolders')?.value}));
+    await page.reload({waitUntil:'domcontentloaded'});
+    await page.waitForTimeout(900);
+    await print('HTTP AFTER RELOAD',async()=>({root:root?.name,images:images.length,
+      selected:document.getElementById('recentFolders')?.value,
+      saved:await getRecentLibraries().then(rs=>rs.map(e=>({name:e.name,kind:e.handle?.kind}))).catch(e=>e.message),
+      status:document.getElementById('status')?.textContent}));
+  } finally {
+    await new Promise(resolve=>httpServer.close(resolve));
+  }
 } finally {
  if(context)await context.close();
  await rm(testDir,{recursive:true,force:true});
