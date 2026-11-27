@@ -911,6 +911,14 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
 html[data-theme="light"] #headerRelativePath{color:#f0e4e7}
 @media(min-width:1250px){.top-left{grid-template-columns:max-content max-content}}
 @media(max-width:680px){.top-left{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto}.top-left #results{grid-column:1;grid-row:2}#headerRelativePath{grid-row:3}}
+/* Reserve the viewport scrollbar gutter when a filter changes the document height. */
+html{scrollbar-gutter:stable}
+#gallery{overflow-anchor:none}
+#viewer .stage{cursor:default}
+#viewer .stage #bigImage{transform-origin:center center;cursor:zoom-in;user-select:none;-webkit-user-drag:none}
+#viewer .stage #bigImage[data-zoomed="true"]{cursor:grab}
+#viewer .stage #bigImage[data-panning="true"]{cursor:grabbing}
+#viewer .stage button{z-index:3}
 </style>
 </head>
 <body>
@@ -997,7 +1005,7 @@ html[data-theme="light"] #headerRelativePath{color:#f0e4e7}
 </div>
 <dialog id="viewer">
   <div class="viewer">
-    <div class="stage" id="viewerStage"><button id="prev" title="Previous (←)">‹</button><img id="bigImage" alt="Selected photo" hidden><video id="bigVideo" controls preload="metadata" playsinline hidden></video><button id="next" title="Next (→)">›</button></div>
+    <div class="stage" id="viewerStage"><button id="prev" title="Previous (←)">‹</button><img id="bigImage" alt="Selected photo" title="Scroll to zoom; drag to pan when zoomed" draggable="false" hidden><video id="bigVideo" controls preload="metadata" playsinline hidden></video><button id="next" title="Next (→)">›</button></div>
     <section class="details">
       <button class="close" id="closeViewer" title="Close (Esc)">×</button>
       <h2 id="fileLabel"></h2><div id="pathLabel"></div>
@@ -1261,7 +1269,7 @@ function goBackView(){
     localStorage.setItem(COLLECTION_OPERATOR_KEY,collectionOperator);
   }catch(_){}
   syncFilterControls();clearSelection();visibleCount=80;
-  renderAlbumList();renderTagList();filterAndRender();
+  renderAlbumList();renderTagList();filterAndRender('',true);
 }
 
 function typeOf(path){return IMAGE_EXT.test(path)?'image':VIDEO_EXT.test(path)?'video':null}
@@ -1703,7 +1711,7 @@ async function itemFile(item){
 function releaseViewerMedia(){
   viewerNo++;
   const video=el('bigVideo');video.pause();video.removeAttribute('src');video.load();video.hidden=true;
-  const img=el('bigImage');img.removeAttribute('src');img.hidden=true;
+  const img=el('bigImage');resetViewerZoom();img.removeAttribute('src');img.hidden=true;
   if(bigURL)URL.revokeObjectURL(bigURL);bigURL=null;
 }
 // IndexedDB stores opaque folder handles, not a path string. The browser may still require new permission.
@@ -2072,11 +2080,12 @@ async function removeCollection(){
 function renderAlbumSelector(){const s=el('albumSelect'),old=s.value;s.replaceChildren(new Option('Choose album',''));for(const name of [...albums.keys()].sort((a,b)=>a.localeCompare(b,'cs')))s.add(new Option(name,name));if(albums.has(old))s.value=old;updateAlbumButton()}
 function updateFolderDisplay(){
   const select=el('folder'),path=select.value;
-  el('folderLeafText').textContent=path?path.split('/').at(-1):'All folders';
-  select.title=path||'All folders';
-  const label=el('headerRelativePath');label.textContent=path||'All folders';label.title=path||'All folders';
+  const leaf=el('folderLeafText'),label=el('headerRelativePath'),full=path||'All folders',short=path?path.split('/').at(-1):full;
+  if(leaf&&leaf.textContent!==short)leaf.textContent=short;
+  if(select.title!==full)select.title=full;
+  if(label){if(label.textContent!==full)label.textContent=full;if(label.title!==full)label.title=full}
 }
-function filterAndRender(navigation='',preserveCards=false){
+function filterAndRender(navigation='',preserveCards=!!navigation){
   updateFolderDisplay();
   const q=el('query').value.trim().toLocaleLowerCase('cs'),folder=el('folder').value,kind=el('kind').value;
   const albumSets=[...selectedAlbumNames].filter(name=>albums.has(name)).map(name=>albums.get(name));
@@ -2122,7 +2131,11 @@ function renderCards(){
     observer.unobserve(e.target);const p=e.target.dataset.path;if(p&&byPath.has(p))queueThumb(p,e.target);
   }},{rootMargin:'320px'});
   for(const item of slice){
-    const retained=existing.get(item.path);if(retained){placeCard(retained);continue}
+    const retained=existing.get(item.path);if(retained){
+      retained.classList.toggle('in-trash',trash.has(item.path));
+      const heart=retained.querySelector('.heart');if(heart){const on=favorites.has(item.path);heart.classList.toggle('on',on);const symbol=on?'♥':'♡';if(heart.textContent!==symbol)heart.textContent=symbol}
+      placeCard(retained);continue
+    }
     const card=document.createElement('article');card.className='photo'+(trash.has(item.path)?' in-trash':'')+(selectedPaths.has(item.path)?' is-selected':'');card.dataset.path=item.path;
     let media,thumbnail;
     if(item.kind==='video'){
@@ -2146,9 +2159,8 @@ function renderCards(){
     };
     meta.onclick=selectFromCaption;
     meta.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){selectFromCaption(e)}};
-    card.append(media,heart,meta);placeCard(card);if(preserve&&thumbs.has(item.path))thumbnail.src=thumbs.get(item.path);else observer.observe(thumbnail);
+    card.append(media,heart,meta);placeCard(card);if(preserve&&thumbs.has(item.path))thumbnail.src=thumbs.get(item.path);else if(thumbs.has(item.path))thumbnail.src=thumbs.get(item.path);else observer.observe(thumbnail);
   }
-  el('results').textContent=(activeView.type==='trash'?'Trash · ':(activeView.type==='tags'?'Tags '+selectedTagKeys.size+' · ':''))+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.length.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files';
   // Always show the action in Trash, even if the search currently filters its cards.
   // It deletes the whole indexed Trash, not merely the visible/filter-matching subset.
   const trashAction=el('deleteAllTrash');
@@ -2883,7 +2895,8 @@ function updateResultsLine(){
   if(node){
     // Show matched-result count and the visible/total-file count, without
     // repeating the file total in the separate loading-status indicator.
-    node.textContent=filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
+    const message=filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files'+selectionCountText();
+    if(node.textContent!==message)node.textContent=message;
     node.title=prefix+filtered.length.toLocaleString('cs-CZ')+' results · '+node.textContent;
   }
 }
@@ -3370,11 +3383,54 @@ el('showInFolder').onclick=showInFolder; el('copyLocation').onclick=()=>void cop
 el('moveToTrash').onclick=()=>void moveCurrentToTrash(); el('restoreTrash').onclick=()=>void restoreCurrentFromTrash();
 el('deletePermanently').onclick=()=>void permanentlyDeleteCurrent(); el('deleteAllTrash').onclick=()=>void deleteAllTrash();el('deleteSelectedTrash').onclick=()=>void deleteSelectedTrash();
 el('closeViewer').onclick=closeViewer; el('viewer').addEventListener('cancel',e=>{e.preventDefault(); closeViewer()});
+// Viewer zoom is relative to the fit-to-stage image, not the original file size.
+let viewerZoom={scale:1,x:0,y:0},viewerPan=null;
+function constrainViewerZoom(state,width,height,stageWidth,stageHeight){
+  if(state.scale<=1)return {scale:1,x:0,y:0};
+  const maxX=Math.max(0,(width*state.scale-stageWidth)/2),maxY=Math.max(0,(height*state.scale-stageHeight)/2);
+  return {scale:state.scale,x:Math.max(-maxX,Math.min(maxX,state.x)),y:Math.max(-maxY,Math.min(maxY,state.y))};
+}
+function zoomViewerAt(state,scale,dx,dy,width,height,stageWidth,stageHeight){
+  const next=Math.max(1,Math.min(8,scale)),ratio=next/state.scale;
+  return constrainViewerZoom({scale:next,x:dx-(dx-state.x)*ratio,y:dy-(dy-state.y)*ratio},width,height,stageWidth,stageHeight);
+}
+function paintViewerZoom(){
+  const image=el('bigImage');image.style.transform='translate('+viewerZoom.x+'px,'+viewerZoom.y+'px) scale('+viewerZoom.scale+')';
+  image.dataset.zoomed=String(viewerZoom.scale>1);
+}
+function resetViewerZoom(){
+  viewerZoom={scale:1,x:0,y:0};viewerPan=null;const image=el('bigImage');delete image.dataset.panning;paintViewerZoom();
+}
+function initViewerZoom(){
+  const image=el('bigImage'),stage=el('viewerStage');
+  image.addEventListener('wheel',event=>{
+    if(image.hidden||!image.naturalWidth)return;
+    event.preventDefault();
+    const rect=image.getBoundingClientRect(),bounds=stage.getBoundingClientRect();
+    const centerX=(rect.left+rect.right)/2-viewerZoom.x,centerY=(rect.top+rect.bottom)/2-viewerZoom.y;
+    const delta=event.deltaY*(event.deltaMode===1?16:event.deltaMode===2?bounds.height:1);
+    viewerZoom=zoomViewerAt(viewerZoom,viewerZoom.scale*Math.exp(-delta*.002),event.clientX-centerX,event.clientY-centerY,rect.width/viewerZoom.scale,rect.height/viewerZoom.scale,bounds.width,bounds.height);
+    paintViewerZoom();
+  },{passive:false});
+  image.addEventListener('pointerdown',event=>{
+    if(event.button!==0||viewerZoom.scale<=1||image.hidden)return;
+    event.preventDefault();viewerPan={id:event.pointerId,x:event.clientX,y:event.clientY,origin:{...viewerZoom}};image.dataset.panning='true';image.setPointerCapture(event.pointerId);
+  });
+  image.addEventListener('pointermove',event=>{
+    if(!viewerPan||viewerPan.id!==event.pointerId)return;
+    const rect=image.getBoundingClientRect(),b=stage.getBoundingClientRect();
+    viewerZoom=constrainViewerZoom({scale:viewerZoom.scale,x:viewerPan.origin.x+event.clientX-viewerPan.x,y:viewerPan.origin.y+event.clientY-viewerPan.y},rect.width/viewerZoom.scale,rect.height/viewerZoom.scale,b.width,b.height);paintViewerZoom();
+  });
+  const finish=event=>{if(viewerPan?.id!==event.pointerId)return;viewerPan=null;delete image.dataset.panning;if(image.hasPointerCapture(event.pointerId))image.releasePointerCapture(event.pointerId)};
+  image.addEventListener('pointerup',finish);image.addEventListener('pointercancel',finish);image.addEventListener('lostpointercapture',finish);
+  image.addEventListener('dblclick',resetViewerZoom);
+}
 const mediaDialog=el('viewer'), mediaStage=el('viewerStage');
+initViewerZoom();
 let dismissPointerStartedOnBackground=false;
 function hitViewerBackdrop(e){ if(e.target!==mediaDialog) return false; const r=mediaDialog.getBoundingClientRect(); return e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom; }
-mediaDialog.addEventListener('pointerdown',e=>{ dismissPointerStartedOnBackground=e.target===mediaStage||hitViewerBackdrop(e); });
-mediaDialog.addEventListener('click',e=>{ const backgroundClick=e.target===mediaStage||hitViewerBackdrop(e); if(dismissPointerStartedOnBackground&&backgroundClick) closeViewer(); dismissPointerStartedOnBackground=false; });
+mediaDialog.addEventListener('pointerdown',e=>{ dismissPointerStartedOnBackground=hitViewerBackdrop(e); });
+mediaDialog.addEventListener('click',e=>{ const backgroundClick=hitViewerBackdrop(e); if(dismissPointerStartedOnBackground&&backgroundClick) closeViewer(); dismissPointerStartedOnBackground=false; });
 mediaDialog.addEventListener('pointercancel',()=>{dismissPointerStartedOnBackground=false}); mediaDialog.addEventListener('close',()=>{dismissPointerStartedOnBackground=false});
 el('prev').onclick=()=>moveViewer(-1); el('next').onclick=()=>moveViewer(1);
 el('bigVideo').addEventListener('error',()=>{if(!el('bigVideo').hidden)toast('This browser cannot play the video (unsupported format or codec). Original file is unchanged.')});

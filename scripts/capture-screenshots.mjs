@@ -111,6 +111,31 @@ try {
   }
 
   await page.waitForFunction(() => document.querySelectorAll('#gallery .photo').length >= 12, null, { timeout: 20000 });
+  await page.waitForFunction(()=>[...document.querySelectorAll('#gallery .thumb')].some(x=>x.complete&&x.naturalWidth>0));
+  const baseline=await page.evaluate(()=>{
+    const cards=[...document.querySelectorAll('#gallery .photo')];
+    window.__retainedFilterCards=cards.map(card=>({card,thumb:card.querySelector('.thumb'),src:card.querySelector('.thumb').getAttribute('src')}));
+    const b=document.getElementById('gallery').getBoundingClientRect();return {width:b.width,count:cards.length};
+  });
+  for(const control of ['#folderLockLabel','#collectionOperator','#collectionOperator','#collectionOperator','#folderLockLabel']){
+    await page.locator(control).click();
+    await page.waitForFunction(base=>{
+      const cards=[...document.querySelectorAll('#gallery .photo')],b=document.getElementById('gallery').getBoundingClientRect();
+      return cards.length===base.count&&Math.abs(b.width-base.width)<1&&window.__retainedFilterCards.every((entry,i)=>entry.card===cards[i]&&entry.thumb===cards[i].querySelector('.thumb')&&(!entry.src||entry.thumb.getAttribute('src')===entry.src||!entry.src.startsWith('blob:')));
+    },baseline);
+  }
+  console.log('PASS: no-op lock/operator toggles keep card nodes, loaded blobs and grid width');
+
+  await page.locator('#gallery .photo > img.thumb').first().click();
+  await page.waitForFunction(()=>!document.getElementById('bigImage').hidden&&document.getElementById('bigImage').naturalWidth>0);
+  await page.locator('#viewerStage').click({position:{x:4,y:4}});
+  if(!await page.locator('#viewer').isVisible())throw Error('Clicking the stage closed the photo');
+  await page.locator('#bigImage').hover();await page.mouse.wheel(0,-400);
+  await page.waitForFunction(()=>viewerZoom.scale>1);
+  await page.mouse.wheel(0,1200);await page.waitForFunction(()=>viewerZoom.scale===1);
+  await page.locator('#closeViewer').click();
+  console.log('PASS: viewer stage stays open and wheel zoom returns to fit');
+
   await page.waitForTimeout(900);
   const dest = join(rootPath, 'docs', 'screenshots');
   await mkdir(dest, { recursive: true });
