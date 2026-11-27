@@ -10,7 +10,7 @@ const app = html.match(/<script>([\s\S]*?)<\/script>/i)?.[1];
 test('concise header counts and status contain no duplicate total',()=>{
   assert.ok(app);
   assert.doesNotThrow(()=>new Function(app));
-  assert.match(app,/node\.textContent=filtered\.length\.toLocaleString\('cs-CZ'\)\+' results · showing '\+slice\.toLocaleString/);
+  assert.match(app,/const message=filtered\.length\.toLocaleString\('cs-CZ'\)\+' results · showing '\+slice\.toLocaleString/);
   assert.match(app,/node\.title=prefix\+filtered\.length/);
   assert.match(app,/renderAlbumList\(\);renderTagList\(\);filterAndRender\(\);setStatus\(origin\)/);
   assert.doesNotMatch(app,/setStatus\(images\.length\.toLocaleString\('cs-CZ'\)\+' files/);

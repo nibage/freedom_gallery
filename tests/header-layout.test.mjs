@@ -28,8 +28,8 @@ test('filter toolbar is no longer a separately sticky main element',()=>{
 test('search is compact and right-aligned, results stay visible and details appear on hover',()=>{
   assert.match(html,/\.top > \.filters > #query\{[\s\S]*?max-width:220px;[\s\S]*?margin-left:auto;/);
   const header=html.slice(html.indexOf('<header class="top">'),html.indexOf('</header>'));
-  assert.match(header,/id="query"[^>]*>\s*<select id="folder"[\s\S]*?id="folderLock"[\s\S]*?id="kind"[\s\S]*?id="viewBack"[\s\S]*?id="layoutToggle"/);
-  assert.match(html,/node\.textContent=filtered\.length\.toLocaleString/);
+  assert.match(header,/id="query"[^>]*>\s*<div id="folderControl"><select id="folder"[\s\S]*?id="folderLock"[\s\S]*?id="kind"[\s\S]*?id="viewBack"[\s\S]*?id="layoutToggle"/);
+  assert.match(html,/const message=filtered\.length\.toLocaleString/);
   assert.match(html,/node\.title=prefix\+filtered\.length/);
   assert.match(html,/el\('libraryName'\)\.title=picked\.name/);
 });
@@ -42,7 +42,7 @@ test('inline gallery JavaScript still parses',()=>{
 
 test('media-type selector is wide enough and matches top header buttons',()=>{
   assert.match(html,/\.top > \.filters > #kind\{[\s\S]*?min-width:184px;/);
-  assert.match(html,/\.top > \.filters > :is\(#query,#folder,#kind,#layoutToggle,#viewBack,\.folder-lock\)[\s\S]*?height:38px!important;/);
+  assert.match(html,/\.top > \.filters > :is\(#query,#folderControl,#kind,#layoutToggle,#viewBack,\.folder-lock\)[\s\S]*?height:38px!important;/);
   assert.match(html,/font-size:13px!important;/);
   assert.match(html,/Photos & videos/);
 });
