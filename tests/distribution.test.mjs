@@ -16,9 +16,8 @@ test('concise header counts and status contain no duplicate total',()=>{
   assert.doesNotMatch(app,/setStatus\(images\.length\.toLocaleString\('cs-CZ'\)\+' files/);
 });
 
-test('search is wider while remaining responsive',()=>{
-  assert.match(html,/max-width:440px/);
-  assert.match(html,/max-width:540px/);
+test('search is compact and right-aligned while remaining responsive',()=>{
+  assert.match(html,/\.top > \.filters > #query\{[\s\S]*?max-width:220px;[\s\S]*?margin-left:auto;/);
   assert.match(html,/@media \(max-width:680px\)/);
   assert.equal((html.match(/class="filters"/g)||[]).length,1);
 });
