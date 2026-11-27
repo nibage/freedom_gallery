@@ -21,8 +21,8 @@ class Select {
 }
 
 function harness({records=[],prompt='granted',permission='granted',error=null,failSave=false,nameHint='',lastRoot=null}={}){
-  const status={title:''},retry={hidden:true,disabled:true,title:''},forget={hidden:true},dropdown=new Select();
-  const nodes={recentFolders:dropdown,reconnectLibrary:retry,forget,status};
+  const status={title:''},forget={hidden:true},dropdown=new Select();
+  const nodes={recentFolders:dropdown,forget,status};
   const events=[],notices=[],saved=new Map(records.map(x=>[x.id,x]));
   let permissionResult=permission;
   let permissionError=error;
@@ -64,17 +64,17 @@ function harness({records=[],prompt='granted',permission='granted',error=null,fa
     'const {el,Option,window,prefsOp,getRecentLibraries,rememberLibraryName,toast,setStatus,confirmLibrarySelection,console}=env;'+
     "const MAX_RECENTS=5,PICKER_ID='test-picker';"+
     'let root=env.initialRoot,recentLibraries=env.initialRecords,selectedLibraryId=null,pendingLibraryId=null,libraryOpenToken=0,lastLibraryHint=env.nameHint;'+
-    'let prefsAvailable=true;'+
+    'let prefsAvailable=true,browserResetting=false;'+
     'let thumbResetting=false,deletingMedia=false;'+
     'async function activateLibrary(handle){env.events.push("activate:"+handle.name);root=handle;selectedLibraryId=null;pendingLibraryId=null;rememberLibraryName(handle.name);renderRecents();env.events.push("loaded:16 files");}'+
     handlers+
     ';return {renderRecents,rememberLibrary,openRemembered,restoreRecents,selectRememberedLibrary,chooseFolder,'+
-    'reconnectRememberedLibrary,getState:()=>({root,selectedLibraryId,pendingLibraryId,recentLibraries,lastLibraryHint,libraryOpenToken}),'+
+    'getState:()=>({root,selectedLibraryId,pendingLibraryId,recentLibraries,lastLibraryHint,libraryOpenToken}),'+
     'setPermission:v=>env.setPermission(v),setHandleRoot:v=>{root=v},setNameHint:v=>{lastLibraryHint=v}}'
   );
   env.setPermission=value=>{permissionResult=value;permissionError=null;};
   const app=factory(env);
-  return {app,env,picked,dropdown,retry,status,forget,events,notices,saved};
+  return {app,env,picked,dropdown,status,forget,events,notices,saved};
 }
 
 test('automatic startup actually activates most recent granted folder and selects its name',async()=>{
@@ -87,19 +87,16 @@ test('automatic startup actually activates most recent granted folder and select
   assert.ok(x.events.includes('loaded:16 files'));
   assert.equal(x.dropdown.value,'last');
   assert.equal(x.dropdown.options.find(v=>v.value==='last')?.text,'Pictures-special');
-  assert.equal(x.retry.hidden,true);
   assert.equal(x.app.getState().root,x.picked);
 });
 
-test('startup with prompt leaves the placeholder selected and exposes retry',async()=>{
+test('startup with prompt leaves the placeholder selected for dropdown retry',async()=>{
   const x=harness({prompt:'prompt'});
   x.saved.set('last',{id:'last',name:x.picked.name,handle:x.picked,lastUsed:123});
   await x.app.restoreRecents();
   assert.ok(!x.events.some(v=>v.startsWith('activate:')));
   assert.equal(x.dropdown.value,'');
   assert.ok(x.dropdown.options.some(o=>o.value==='last'));
-  assert.equal(x.retry.hidden,false);
-  assert.ok(x.retry.title.includes('Pictures-special'));
   assert.ok(x.events.includes('status:Permission needed'));
   assert.ok(!x.events.includes('request'));
 });
@@ -114,18 +111,16 @@ test('choosing library invokes requestPermission synchronously and actually acti
   assert.ok(x.events.includes('activate:Pictures-special'));
   assert.ok(x.events.includes('loaded:16 files'));
   assert.equal(x.dropdown.value,'last');
-  assert.equal(x.retry.hidden,true);
 });
 
-test('denied permission can be retried from ↻ with same selected option',async()=>{
+test('denied permission can be retried from the same dropdown option',async()=>{
   const x=harness({prompt:'prompt',permission:'denied'});
   x.saved.set('last',{id:'last',name:x.picked.name,handle:x.picked,lastUsed:123});
   await x.app.restoreRecents();
   assert.equal(await x.app.selectRememberedLibrary('last'),false);
   assert.equal(x.dropdown.value,'');
-  assert.equal(x.retry.hidden,false);
   x.app.setPermission('granted');
-  assert.equal(await x.app.reconnectRememberedLibrary(),true);
+  assert.equal(await x.app.selectRememberedLibrary('last'),true);
   assert.deepEqual(x.events.filter(z=>z==='request'),['request','request']);
   assert.ok(x.events.includes('loaded:16 files'));
 });
@@ -150,7 +145,6 @@ test('manual picker selection always shows the active library, even if browser s
   assert.ok(x.events.includes('activate:Pictures-special'));
   assert.equal(x.dropdown.value,'__current__');
   assert.ok(x.dropdown.options.some(o=>o.text.includes('Pictures-special (current session)')));
-  assert.equal(x.retry.hidden,true);
   assert.ok(x.notices.some(v=>v.includes('IndexedDB write blocked')));
 });
 
@@ -168,7 +162,6 @@ test('name-only fallback is accurately labeled and opens picker, not silent medi
   const x=harness({nameHint:'Pictures-special'});
   await x.app.restoreRecents();
   assert.equal(x.dropdown.value,'');
-  assert.equal(x.retry.hidden,false);
   assert.ok(x.dropdown.options.some(o=>o.text==='Pictures-special (reselect folder)'));
   assert.ok(!x.events.some(v=>v.startsWith('activate:')));
   await x.app.selectRememberedLibrary('__reselect__');
@@ -203,10 +196,11 @@ test('manual choice is never overwritten by a delayed automatic restore',async()
   assert.ok(!x.events.includes('activate:Old library'));
 });
 
-test('header handlers remain connected directly to dropdown and retry button',()=>{
-  assert.match(html,/id="reconnectLibrary"/);
+test('header handlers remain connected directly to dropdown and remove library',()=>{
+  assert.doesNotMatch(html,/id="reconnectLibrary"/);
+  assert.match(html,/id="forget"/);
   assert.match(js,/el\('recentFolders'\)\.onchange=e=>\{void selectRememberedLibrary\(e\.target\.value\)\}/);
-  assert.match(js,/el\('reconnectLibrary'\)\.onclick=\(\)=>\{void reconnectRememberedLibrary\(\)\}/);
+  assert.match(js,/el\('forget'\)\.onclick=forgetLibraries/);
   assert.match(js,/if\(!await loadIndex\(\)\)await scan\(\)/);
   assert.doesNotThrow(()=>new Function(js));
 });

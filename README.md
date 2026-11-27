@@ -32,7 +32,7 @@ All three screenshots show the current gallery's compact single-row header, with
 
 ### Latest release highlights
 
-**v7.9.5** adds an **optional offline local launcher** for a stable browser origin on `127.0.0.1`. In Chromium, a native directory handle stored in IndexedDB was restored after restarting the browser when launched this way. Direct `index.html` opening remains supported, but browser permissions for local `file://` pages may behave differently. The compact header and the ↻ reconnect control are unchanged.
+**v7.9.5** adds an **optional offline local launcher** for a stable browser origin on `127.0.0.1`. In Chromium, a native directory handle stored in IndexedDB was restored after restarting the browser when launched this way. Direct `index.html` opening remains supported, but browser permissions for local `file://` pages may behave differently. The compact header uses the library dropdown to reconnect.
 
 ### See how it works
 
@@ -81,11 +81,11 @@ If reopening saved libraries is unreliable when double-clicking a `file://` HTML
 
 **macOS or Linux:** Run `sh Pictures/__gallery/start-gallery.sh` from your terminal (adjust the path as needed).
 
-The launcher uses a **stable, folder-specific port** so different installed copies of Freedom Gallery don't share the same browser shortcut database. The first time, choose your photo library again with **Open library**, even if you used the `file://` version previously—these are different browser origins. On subsequent launches, use the **same launcher, browser and profile**. If Chrome/Edge has retained read/write permission, the gallery opens the last library automatically; otherwise, use **↻** to request renewed access. The browser can still require confirmation and the app cannot bypass it.
+The launcher uses a **stable, folder-specific port** so different installed copies of Freedom Gallery don't share the same browser shortcut database. The first time, choose your photo library again with **Open library**, even if you used the `file://` version previously—these are different browser origins. On subsequent launches, use the **same launcher, browser and profile**. If Chrome/Edge has retained read/write permission, the gallery opens the last library automatically; otherwise, choose the library in the dropdown to request renewed access. The browser can still require confirmation and the app cannot bypass it.
 
 To stop the launcher, close its terminal window or press **Ctrl+C**. Direct double-clicking `index.html` remains available; the Node.js launcher is not required for any other gallery feature.
 
-**Reopening your library:** The gallery saves recent native folder handles in this browser's IndexedDB. On startup, it selects the last-used folder and loads its photos **when the browser already grants read/write access**. If renewed permission is required, the selector shows **Select library…** and the status says **Permission needed**. Choose the last-used folder (or another remembered folder) in the dropdown, or click **↻** to request access. The selected folder name reflects the library that is actually open.
+**Reopening your library:** The gallery saves recent native folder handles in this browser's IndexedDB. On startup, it selects the last-used folder and loads its photos **when the browser already grants read/write access**. If renewed permission is required, the selector shows **Select library…** and the status says **Permission needed**. Choose the last-used folder (or another remembered folder) in the dropdown to request access. The selected folder name reflects the library that is actually open.
 
 If browser storage cannot retain the native folder handle, the gallery shows **`Folder name (current session)`** after manual opening and a warning. On the next launch it can show **`Folder name (reselect folder)`**, which opens the system picker; a remembered name alone cannot reopen files. If Chrome offers **Allow on every visit** when approving folder access, use that option to keep permission across sessions. The browser may require approval again, especially with locally opened `file://` pages; the gallery cannot override that security requirement. See [Chrome's file permission documentation](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api).
 
@@ -100,7 +100,7 @@ If browser storage cannot retain the native folder handle, the gallery shows **`
 | **Search** | Find items by filename, path, or tag. The header shows only `82 results · showing 80 / 76 034 files` (example); hover for detailed filter matches. |
 | **All folders / Fix folder** | Browse one folder and its descendants; lock the folder scope while selecting collections. |
 | **Photos & videos** | Show all supported media, only photos, or only videos. |
-| **Select library… / ↻** | The last library is selected on startup when it opens successfully; otherwise choose a remembered library or click ↻ to request access. |
+| **Select library…** | The last library is selected on startup when it opens successfully; otherwise choose a remembered library to request access. |
 | **← Back** | Return to the previous search, folder, media type, album/tag or combined filter results. History is session-only (up to 50 steps), resets when opening a different library, and never undoes file or metadata edits. |
 | **Classic / Instagram mode** | Switch between labeled thumbnails and a compact, gapless square grid. |
 | **Albums / Tags · OFF** | Select one album *or* one tag. |
@@ -109,6 +109,7 @@ If browser storage cannot retain the native folder handle, the gallery shows **`
 | **Favorites / Trash** | Organize favorites; in-gallery Trash is reversible until you explicitly delete permanently. |
 | **Rebuild index** | Rescan your actual directory tree after files are added, moved, or renamed. |
 | **Remove thumbs** | Recreate cached previews if they are stale or broken. |
+| **Clear cache** | Confirm a reset of this app URL's browser database and preferences, then reload. Does not remove on-disk files, metadata, index or thumbnails. Browser-managed folder permissions may remain. Close other gallery tabs first. |
 | **Theme** | System, Light, or Dark. |
 
 The visible results count remains useful when filters are active. The status beside the library controls says **loaded from index** when existing saved metadata was used. It shows scanning or other activity when appropriate; it does **not** repeat the total number of files.

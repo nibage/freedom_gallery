@@ -111,19 +111,20 @@ try{
     const {context,page}=await setup('granted');
     await waitForMedia(page);
     assert.equal(await page.locator('#recentFolders').inputValue(),'last');
-    assert.equal(await page.locator('#reconnectLibrary').isHidden(),true);
+    assert.equal(await page.locator('#reconnectLibrary').count(),0);
+    assert.equal(await page.locator('#forget').isVisible(),true);
     console.log('PASS browser: granted remembered folder auto-opens and renders media');
     await context.close();
   }
 
-  // 2: Expired permission: library is displayed and ↻ reopens real media.
+  // 2: Expired permission: the remembered library remains selectable.
   {
     const {context,page}=await setup('prompt');
     assert.equal(await page.locator('#recentFolders').inputValue(),'');
-    assert.equal(await page.locator('#reconnectLibrary').isVisible(),true);
+    assert.equal(await page.locator('#recentFolders').isVisible(),true);
     assert.match(await page.locator('#status').textContent(),/Permission needed/);
     assert.equal(await page.locator('#gallery .photo').count(),0);
-    await page.locator('#reconnectLibrary').click();
+    await page.locator('#recentFolders').selectOption('last');
     await waitForMedia(page);
     assert.ok(await page.evaluate(()=>window.__requests)>=1);
     await page.waitForFunction(()=>document.getElementById('recentFolders').value==='last');

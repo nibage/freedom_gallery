@@ -867,9 +867,6 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   }
 }
 
-/* v7.9.4: one compact permission-retry button only while a saved library is pending. */
-.top-right #reconnectLibrary{flex:0 0 30px;min-width:30px;max-width:30px;height:38px;padding:5px 0;font-size:17px;line-height:1}
-.top-right #reconnectLibrary[hidden]{display:none!important}
 /* Reserve a stable header status slot so transient messages cannot shift filters. */
 .top-right #status{
   flex:0 0 160px;width:160px;min-width:160px;max-width:160px;
@@ -888,6 +885,11 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
 }
 @media(max-width:680px){
   .top > .filters > #query{width:min(220px,100%);max-width:220px;min-width:0}
+}
+/* Three equal-width maintenance buttons fit the existing sidebar. */
+.shell > aside > .aside-bottom-toolbar .btn{
+  flex:1 1 0;min-width:0;max-width:none;white-space:normal;
+  overflow-wrap:normal;min-height:38px;height:auto;padding:5px 2px;
 }
 </style>
 </head>
@@ -910,7 +912,6 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   <div class="top-right">
     <span id="status" class="small">Ready</span>
     <select id="recentFolders" class="recent-chooser" aria-label="Recently opened libraries" title="Recently used libraries" hidden><option value="">Select library…</option></select>
-    <button class="btn" id="reconnectLibrary" type="button" hidden title="Open the selected remembered library and request access if necessary" aria-label="Reconnect selected library">↻</button>
     <button class="btn" id="forget" hidden title="Remove the current library from this browser's remembered list. Files are unchanged.">Remove library</button>
     <button class="btn primary" id="openFolder">📁 Open library</button>
     <label class="theme-label" for="themeSelect">Theme
@@ -945,6 +946,7 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     <div class="aside-bottom-toolbar">
       <button class="btn" id="rescan" disabled title="Scan all subfolders again, reconcile recognized moves, and clean up missing references and previews after a successful scan.">↻ Rebuild index</button>
       <button class="btn" id="rebuildThumbs" disabled title="Delete generated previews and create new ones as you browse. Originals and metadata are unaffected.">↻ Remove thumbs</button>
+      <button class="btn" id="clearCache" type="button" title="Reset this gallery’s browser data, remembered libraries and preferences. Disk files are unchanged.">Clear cache</button>
     </div>
   </aside>
   <main>
@@ -1126,6 +1128,7 @@ const thumbs=new Map(), pendingThumbs=new Map(), thumbJobs=[];
 let thumbWorkers=0;
 let dirCache=new Map(),thumbIndex=new Map(),thumbDirty=false,thumbTimer=null;
 let recentLibraries=[],selectedLibraryId=null,pendingLibraryId=null,prefsAvailable=true,libraryOpenToken=0,librarySwitching=false;
+let browserResetting=false;
 let fileInfo=new Map(), scanInProgress=false, fileInfoTimer=null, thumbResetting=false, deletingMedia=false;
 let configuredRootPath=''; // Human-readable user-entered location of the selected library, NOT exposed by the browser.
 // Selection is UI-only and never persisted; it is scoped to the visible Classic gallery.
@@ -1692,12 +1695,13 @@ function releaseViewerMedia(){
 // IndexedDB stores opaque folder handles, not a path string. The browser may still require new permission.
 function openPrefsDB(){
   return new Promise((resolve,reject)=>{
+    if(browserResetting)return reject(Error('Browser reset in progress'));
     if(!window.indexedDB)return reject(Error('IndexedDB is not available'));
     const req=indexedDB.open(PREFS_DB,2);
     req.onupgradeneeded=()=>{
       for(const name of [PREFS_STORE,UI_PREFS_STORE])if(!req.result.objectStoreNames.contains(name))req.result.createObjectStore(name,{keyPath:'id'});
     };
-    req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error||Error('IndexedDB'));
+    req.onsuccess=()=>{const db=req.result;db.onversionchange=()=>db.close();if(browserResetting){db.close();reject(Error('Browser reset in progress'))}else resolve(db)};req.onerror=()=>reject(req.error||Error('IndexedDB'));
   });
 }
 async function prefsOp(mode,operation){
@@ -1739,7 +1743,7 @@ function toggleLayout(){
   });
 }
 function renderRecents(){
-  const select=el('recentFolders'),retry=el('reconnectLibrary');
+  const select=el('recentFolders');
   select.replaceChildren(new Option('Select library…',''));
   for(const entry of recentLibraries)select.add(new Option(entry.name,entry.id));
   // Persisted library labels and live library handles represent distinct state.
@@ -1752,22 +1756,14 @@ function renderRecents(){
   // Match Music Manager: only an actually open library is selected.
   // A pending library must be selectable again to trigger permission.
   const selected=root?(activeEntry?activeEntry.id:'__current__'):'';
-  const retryId=recentLibraries.some(e=>e.id===pendingLibraryId)?pendingLibraryId
-    :recentLibraries[0]?.id||(lastLibraryHint?'__reselect__':'');
   select.hidden=!(root||recentLibraries.length||lastLibraryHint);
   select.value=selected;
-  retry.hidden=!!root||!retryId;
-  retry.disabled=!retryId;
-  retry.title=retryId==='__reselect__'
-    ?'Re-select “'+lastLibraryHint+'” using the system folder picker'
-    :'Open “'+(recentLibraries.find(e=>e.id===retryId)?.name||'the last library')+'” and request permission';
   select.title=root?'Open library: '+root.name
-    :retryId?'Choose a remembered library to open it, or use ↻ to reconnect.'
-      :'Select a library';
+    :recentLibraries.length||lastLibraryHint?'Choose a remembered library to open it.':'Select a library';
   el('forget').hidden=!activeEntry;
 }
 async function rememberLibrary(handle){
-  if(!handle)return false;
+  if(!handle||browserResetting)return false;
   rememberLibraryName(handle.name);
   try{
     let found=null;
@@ -1804,10 +1800,44 @@ async function forgetLibraries(){
     await prefsOp('readwrite',store=>store.delete(selectedLibraryId));
     selectedLibraryId=null;
     recentLibraries=await getRecentLibraries();
+    // Do not resurrect the removed library as a name-only fallback on next launch.
+    lastLibraryHint=recentLibraries[0]?.name||'';
+    try{if(lastLibraryHint)localStorage.setItem(LAST_LIBRARY_NAME_KEY,lastLibraryHint);else localStorage.removeItem(LAST_LIBRARY_NAME_KEY)}catch(_){}
     // Keep the active folder visible as a session-only entry.
     renderRecents();
     toast('Saved library shortcut removed; the currently open library is unchanged.');
   }catch(e){toast('Could not remove library shortcut: '+e.message)}
+}
+// Reset only the current app URL's own browser storage, never the media library.
+async function clearBrowserData(){
+  await new Promise((resolve,reject)=>{
+    const request=indexedDB.deleteDatabase(PREFS_DB);
+    request.onsuccess=()=>resolve();
+    request.onerror=()=>reject(request.error||Error('Could not delete gallery database'));
+    request.onblocked=()=>{setStatus('Close other gallery tabs');toast('Close other Freedom Gallery tabs to finish clearing browser data.');};
+  });
+  for(const key of [THEME_KEY,LAST_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY])
+    localStorage.removeItem(key);
+}
+async function clearBrowserCache(){
+  const busy=()=>browserResetting||librarySwitching||scanInProgress||thumbResetting||deletingMedia||pendingSaves;
+  if(busy()){toast('Wait for the current gallery operation to finish.');return;}
+  if(!await galleryCollectionDialog({
+    title:'Clear browser cache?',
+    message:'Forget all saved libraries and browser preferences for this copy of Freedom Gallery, then reload the application. Close other gallery tabs first.\n\nPhotos, videos, albums, tags, favorites, Trash, index and thumbnails on disk will not be deleted. Browser-managed folder permissions may remain.',
+    action:'Clear cache',danger:true
+  }))return;
+  if(busy()){toast('Wait for the current gallery operation to finish.');return;}
+  browserResetting=true;++libraryOpenToken;
+  el('clearCache').disabled=true;document.body.inert=true;
+  setStatus('Clearing browser data…');
+  try{
+    await clearBrowserData();
+    location.reload();
+  }catch(e){
+    browserResetting=false;document.body.inert=false;el('clearCache').disabled=false;
+    setStatus('Cache reset failed');toast('Could not clear browser data: '+e.message);
+  }
 }
 async function activateLibrary(picked){
   if(thumbResetting||deletingMedia||scanInProgress||librarySwitching)throw Error('Wait for the current gallery operation to finish.');
@@ -1830,7 +1860,7 @@ async function activateLibrary(picked){
   }finally{librarySwitching=false}
 }
 async function openRemembered(entry,allowPrompt=true){
-  if(!entry?.handle)return false;
+  if(browserResetting||!entry?.handle)return false;
   const token=++libraryOpenToken;
   try{
     // The request must be made directly in the user click/change handler.
@@ -1841,7 +1871,7 @@ async function openRemembered(entry,allowPrompt=true){
     if(status!=='granted'){
       if(allowPrompt)toast(location.protocol==='file:'
         ?'Folder access was not granted. For more reliable reopening, use start-gallery.cmd (offline local launcher), or Open library.'
-        :'Permission was not granted. Try ↻ or Open library.');
+        :'Permission was not granted. Choose the library again or use Open library.');
       return false;
     }
     if(token!==libraryOpenToken||(!allowPrompt&&root))return false;
@@ -1857,7 +1887,7 @@ async function openRemembered(entry,allowPrompt=true){
   }
 }
 async function restoreRecents(){
-  if(!window.showDirectoryPicker)return;
+  if(browserResetting||!window.showDirectoryPicker)return;
   try{
     const token=libraryOpenToken;
     const found=await getRecentLibraries();
@@ -1871,12 +1901,12 @@ async function restoreRecents(){
       if(!ok&&!root&&restoreToken===libraryOpenToken){
         pendingLibraryId=last.id;renderRecents();
         setStatus('Permission needed');
-        el('status').title='Select “'+last.name+'” or press ↻ to request access. The browser may require renewed permission.'
+        el('status').title='Select “'+last.name+'” in the dropdown to request access. The browser may require renewed permission.'
           +(location.protocol==='file:'?' For a stable browser origin, use the optional start-gallery.cmd offline launcher.':'');
       }
     }else if(lastLibraryHint){
       setStatus('Reconnect library');
-      el('status').title='The browser remembered only the name “'+lastLibraryHint+'”. Use ↻ to reselect this folder.';
+      el('status').title='The browser remembered only the name “'+lastLibraryHint+'”. Select it in the dropdown or use Open library.';
     }
   }catch(e){
     console.warn('Recent library history unavailable:',e);
@@ -1888,6 +1918,7 @@ async function restoreRecents(){
   }
 }
 async function selectRememberedLibrary(id){
+  if(browserResetting)return false;
   if(root&&id==='__current__'){renderRecents();return true}
   if(!id){if(root)await chooseFolder();renderRecents();return !!root}
   if(id==='__reselect__'){
@@ -1903,23 +1934,18 @@ async function selectRememberedLibrary(id){
     renderRecents();
     return !!root;
   }
-  // An existing selection must also be actionable using ↻ (native selects
-  // do not fire change when the user chooses the same option again).
+  // A denied request returns the selector to its placeholder so it can be retried.
   pendingLibraryId=id;
   const ok=await openRemembered(entry,true);
   if(!ok&&!root){
     setStatus('Permission needed');
-    el('status').title='Use ↻ to retry “'+entry.name+'” or Open library to select the folder again.';
+    el('status').title='Choose “'+entry.name+'” again in the dropdown or use Open library.';
   }
   renderRecents();
   return ok;
 }
-function reconnectRememberedLibrary(){
-  const id=recentLibraries.some(e=>e.id===pendingLibraryId)?pendingLibraryId
-    :recentLibraries[0]?.id||(lastLibraryHint?'__reselect__':'');
-  return selectRememberedLibrary(id);
-}
 async function chooseFolder(){
+  if(browserResetting)return;
   if(!window.showDirectoryPicker){toast('Use Chrome or Edge with local folder access enabled.');return}
   const token=++libraryOpenToken;
   try{
@@ -3259,7 +3285,6 @@ el('gallery').closest('main').addEventListener('contextmenu',e=>{
 });
 el('openFolder').onclick=chooseFolder;el('openFolder2').onclick=chooseFolder;
 el('recentFolders').onchange=e=>{void selectRememberedLibrary(e.target.value)};
-el('reconnectLibrary').onclick=()=>{void reconnectRememberedLibrary()};
 el('forget').onclick=forgetLibraries;
 el('rescan').onclick=()=>void scan(true);
 el('navAll').onclick=()=>changeView('all'); el('navFav').onclick=e=>{ if(e.target.closest('.row-plus')) return; chooseSpecialView('favorites'); }; el('navTrash').onclick=e=>{ if(e.target.closest('.row-plus')) return; chooseSpecialView('trash'); };
@@ -3300,6 +3325,7 @@ el('loadMore').onclick=()=>{visibleCount+=80; renderCards()};
 el('layoutToggle').onclick=toggleLayout;
 el('themeSelect').onchange=e=>{applyTheme(e.target.value); try{localStorage.setItem(THEME_KEY,themePreference)}catch(_){toast('Theme changed but could not be saved in this browser.')}};
 el('rebuildThumbs').onclick=()=>void rebuildThumbnailCache();
+el('clearCache').onclick=()=>void clearBrowserCache();
 el('favViewer').onclick=()=>{if(currentPath){toggleFavorite(currentPath); if(activeView.type==='favorites')filterAndRender(); else renderCards(); updateViewerFavorite();}};
 el('viewerShowAlbums').onclick=()=>switchViewerCollections('albums'); el('viewerShowTags').onclick=()=>switchViewerCollections('tags');
 el('viewerCollectionQuery').addEventListener('input',debounce(renderViewerCollections,90));
