@@ -574,7 +574,7 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
 /* v7.8.1: match the compact controls on the right side of the header.
    Native selects need smaller font + padding to fit completely within 38px. */
 .filters {align-items:center;}
-.top > .filters > :is(#query,#folder,#kind,#layoutToggle,#viewBack,.folder-lock) {
+.top > .filters > :is(#query,#folderControl,#kind,#layoutToggle,#viewBack,.folder-lock) {
   box-sizing:border-box;
   height:38px!important;
   min-height:38px!important;
@@ -658,7 +658,7 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
   background:transparent!important;
   border:0!important;
 }
-.top > .filters > #folder{
+.top > .filters > #folderControl{
   flex:0 1 190px;
   width:190px;
   min-width:145px;
@@ -720,7 +720,7 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
 }
 @media(max-width:990px){
   .top > .filters{flex-wrap:wrap;justify-content:flex-start;}
-  .top > .filters > #folder{flex:1 1 180px;width:auto;max-width:none;}
+  .top > .filters > #folderControl{flex:1 1 180px;width:auto;max-width:none;}
   .top > .filters > #kind{flex:1 1 184px;min-width:184px;max-width:none;width:auto;}
   .top > .filters > #layoutToggle{flex:0 0 auto;}
 }
@@ -779,7 +779,7 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     justify-content:flex-start;
     flex-wrap:nowrap;
   }
-  .top > .filters > #folder{
+  .top > .filters > #folderControl{
     flex:0 0 160px;
     width:160px;
     min-width:160px;
@@ -895,16 +895,32 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
 @media(max-width:1799px){
   .top-right .recent-chooser{width:180px;min-width:115px;max-width:180px;flex:0 1 180px}
 }
+/* A single painted folder control, with the native select as its invisible hit target. */
+#folderControl{position:relative;padding:0!important;box-sizing:border-box;min-width:0;border:1px solid var(--control-border);border-radius:8px;background:var(--control);color:var(--text);overflow:hidden}
+#folderControl:focus-within{border-color:var(--accent);outline:1px solid var(--accent);outline-offset:-2px}
+#folderControl #folder{position:absolute;inset:0;display:block;width:100%;height:100%;min-width:0;min-height:0;max-width:none;margin:0;padding:0;opacity:0;z-index:1;cursor:pointer}
+#folderLeaf{position:absolute;inset:0 28px 0 10px;display:flex;align-items:center;pointer-events:none;overflow:hidden;white-space:nowrap;color:var(--text);font-size:13px}
+#folderLeafText{display:block;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#folderControl::after{content:"";position:absolute;right:11px;top:50%;width:7px;height:7px;border-right:1.5px solid var(--text);border-bottom:1.5px solid var(--text);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+#folderControl:has(#folder:disabled){opacity:.5}
+#folderControl:has(#folder:disabled) #folder{cursor:default}
+.top-left{display:grid;grid-template-columns:max-content minmax(0,1fr);grid-template-rows:auto auto;column-gap:8px;row-gap:2px;align-content:center;align-items:center}
+.top-left h1{grid-column:1;grid-row:1}
+.top-left #results{grid-column:2;grid-row:1}
+#headerRelativePath{grid-column:1/-1;grid-row:2;display:block;min-width:0;max-width:100%;font-size:10px;line-height:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+html[data-theme="light"] #headerRelativePath{color:#f0e4e7}
+@media(min-width:1250px){.top-left{grid-template-columns:max-content max-content}}
+@media(max-width:680px){.top-left{grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto}.top-left #results{grid-column:1;grid-row:2}#headerRelativePath{grid-row:3}}
 </style>
 </head>
 <body>
 <header class="top">
   <div class="top-left">
-    <h1>▦ freedom_gallery</h1><span id="results" class="results-header" aria-live="polite">Choose a media library folder.</span><span class="small" id="libraryName" hidden aria-hidden="true">No library selected</span>
+    <h1>▦ freedom_gallery</h1><span id="results" class="results-header" aria-live="polite">Choose a media library folder.</span><span class="small" id="libraryName" hidden aria-hidden="true">No library selected</span><span id="headerRelativePath" title="Selected folder relative to the library">All folders</span>
   </div>
   <div class="filters">
     <input id="query" type="search" placeholder="Search… (/)" title="Search filename, path or tag; press / to focus" aria-label="Search media">
-    <select id="folder" aria-label="Filter by folder"><option value="">All folders</option></select>
+    <div id="folderControl"><select id="folder" aria-label="Filter by folder"><option value="">All folders</option></select><span id="folderLeaf" aria-hidden="true"><span id="folderLeafText">All folders</span></span></div>
     <label class="folder-lock" id="folderLockLabel" title="Lock folder: keep the selected folder while browsing albums and tags. In OR mode, folder is temporarily ignored but remembered.">
       <input id="folderLock" type="checkbox" checked aria-label="Lock selected folder" />
       <span class="folder-lock-icons" aria-hidden="true"><span id="folderLockIcon">🔒</span><span>📁</span></span>
@@ -2054,7 +2070,14 @@ async function removeCollection(){
 }
 
 function renderAlbumSelector(){const s=el('albumSelect'),old=s.value;s.replaceChildren(new Option('Choose album',''));for(const name of [...albums.keys()].sort((a,b)=>a.localeCompare(b,'cs')))s.add(new Option(name,name));if(albums.has(old))s.value=old;updateAlbumButton()}
+function updateFolderDisplay(){
+  const select=el('folder'),path=select.value;
+  el('folderLeafText').textContent=path?path.split('/').at(-1):'All folders';
+  select.title=path||'All folders';
+  const label=el('headerRelativePath');label.textContent=path||'All folders';label.title=path||'All folders';
+}
 function filterAndRender(navigation='',preserveCards=false){
+  updateFolderDisplay();
   const q=el('query').value.trim().toLocaleLowerCase('cs'),folder=el('folder').value,kind=el('kind').value;
   const albumSets=[...selectedAlbumNames].filter(name=>albums.has(name)).map(name=>albums.get(name));
   const tagKeys=[...selectedTagKeys],specials=[...selectedSpecialViews];
@@ -2123,7 +2146,7 @@ function renderCards(){
     };
     meta.onclick=selectFromCaption;
     meta.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){selectFromCaption(e)}};
-    card.append(media,heart,meta);placeCard(card);observer.observe(thumbnail);
+    card.append(media,heart,meta);placeCard(card);if(preserve&&thumbs.has(item.path))thumbnail.src=thumbs.get(item.path);else observer.observe(thumbnail);
   }
   el('results').textContent=(activeView.type==='trash'?'Trash · ':(activeView.type==='tags'?'Tags '+selectedTagKeys.size+' · ':''))+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.length.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files';
   // Always show the action in Trash, even if the search currently filters its cards.
@@ -3316,7 +3339,7 @@ el('collectionOperator').onclick=()=>{
   }
   setCollectionView();
   try{localStorage.setItem(COLLECTION_OPERATOR_KEY,collectionOperator)}catch(_){}
-  syncFilterControls();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender('filter');
+  syncFilterControls();clearSelection();filterAndRender('filter',true);
 };
 el('folderLock').onchange=e=>{
   folderLocked=e.target.checked;
