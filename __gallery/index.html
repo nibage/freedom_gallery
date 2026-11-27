@@ -2054,7 +2054,7 @@ async function removeCollection(){
 }
 
 function renderAlbumSelector(){const s=el('albumSelect'),old=s.value;s.replaceChildren(new Option('Choose album',''));for(const name of [...albums.keys()].sort((a,b)=>a.localeCompare(b,'cs')))s.add(new Option(name,name));if(albums.has(old))s.value=old;updateAlbumButton()}
-function filterAndRender(navigation=''){
+function filterAndRender(navigation='',preserveCards=false){
   const q=el('query').value.trim().toLocaleLowerCase('cs'),folder=el('folder').value,kind=el('kind').value;
   const albumSets=[...selectedAlbumNames].filter(name=>albums.has(name)).map(name=>albums.get(name));
   const tagKeys=[...selectedTagKeys],specials=[...selectedSpecialViews];
@@ -2080,15 +2080,26 @@ function filterAndRender(navigation=''){
     if(q&&!path.toLocaleLowerCase('cs').includes(q)&&!(tags.get(path)||[]).some(t=>t.toLocaleLowerCase('cs').includes(q)))return false;
     return true;
   });
-  navButtonActive();renderCards();recordRenderedView(navigation);
+  navButtonActive();renderCards(preserveCards);recordRenderedView(navigation);
 }
 function renderCards(){
-  if(observer)observer.disconnect();const host=el('gallery');host.replaceChildren();
-  const slice=filtered.slice(0,visibleCount);
+  const host=el('gallery'),preserve=arguments[0]===true,slice=filtered.slice(0,visibleCount);
+  const existing=preserve?new Map([...host.children].map(card=>[card.dataset.path,card])):new Map();
+  if(!preserve){if(observer)observer.disconnect();host.replaceChildren();}
+  else{
+    const wanted=new Set(slice.map(item=>item.path));
+    for(const [path,card] of existing)if(!wanted.has(path)){
+      const thumb=card.querySelector('.thumb');if(thumb&&observer)observer.unobserve(thumb);
+      card.remove();existing.delete(path);
+    }
+  }
+  let position=0;
+  const placeCard=card=>{const before=host.children[position]||null;if(before!==card)host.insertBefore(card,before);position++};
   if(!observer)observer=new IntersectionObserver(entries=>{for(const e of entries)if(e.isIntersecting){
     observer.unobserve(e.target);const p=e.target.dataset.path;if(p&&byPath.has(p))queueThumb(p,e.target);
   }},{rootMargin:'320px'});
   for(const item of slice){
+    const retained=existing.get(item.path);if(retained){placeCard(retained);continue}
     const card=document.createElement('article');card.className='photo'+(trash.has(item.path)?' in-trash':'')+(selectedPaths.has(item.path)?' is-selected':'');card.dataset.path=item.path;
     let media,thumbnail;
     if(item.kind==='video'){
@@ -2112,7 +2123,7 @@ function renderCards(){
     };
     meta.onclick=selectFromCaption;
     meta.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){selectFromCaption(e)}};
-    card.append(media,heart,meta);host.append(card);observer.observe(thumbnail);
+    card.append(media,heart,meta);placeCard(card);observer.observe(thumbnail);
   }
   el('results').textContent=(activeView.type==='trash'?'Trash · ':(activeView.type==='tags'?'Tags '+selectedTagKeys.size+' · ':''))+filtered.length.toLocaleString('cs-CZ')+' results · showing '+slice.length.toLocaleString('cs-CZ')+' / '+images.length.toLocaleString('cs-CZ')+' files';
   // Always show the action in Trash, even if the search currently filters its cards.
@@ -3310,7 +3321,7 @@ el('collectionOperator').onclick=()=>{
 el('folderLock').onchange=e=>{
   folderLocked=e.target.checked;
   try{localStorage.setItem(FOLDER_LOCK_KEY,String(folderLocked))}catch(_){}
-  syncFilterControls();clearSelection();visibleCount=80;filterAndRender('filter');
+  syncFilterControls();clearSelection();filterAndRender('filter',true);
 };
 el('collectionQuery').addEventListener('input',debounce(()=>{if(collectionMode==='albums')renderAlbumList();else renderTagList()},90));
 el('newCollection').onclick=()=>void addCollection(); el('removeCollection').onclick=()=>void removeCollection();
