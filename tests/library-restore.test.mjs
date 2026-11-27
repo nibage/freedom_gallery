@@ -69,7 +69,7 @@ function harness({records=[],prompt='granted',permission='granted',error=null,fa
     'async function activateLibrary(handle){env.events.push("activate:"+handle.name);root=handle;selectedLibraryId=null;pendingLibraryId=null;rememberLibraryName(handle.name);renderRecents();env.events.push("loaded:16 files");}'+
     handlers+
     ';return {renderRecents,rememberLibrary,openRemembered,restoreRecents,selectRememberedLibrary,chooseFolder,'+
-    'getState:()=>({root,selectedLibraryId,pendingLibraryId,recentLibraries,lastLibraryHint,libraryOpenToken}),'+
+    'reconnectRememberedLibrary,getState:()=>({root,selectedLibraryId,pendingLibraryId,recentLibraries,lastLibraryHint,libraryOpenToken}),'+
     'setPermission:v=>env.setPermission(v),setHandleRoot:v=>{root=v},setNameHint:v=>{lastLibraryHint=v}}'
   );
   env.setPermission=value=>{permissionResult=value;permissionError=null;};
@@ -91,12 +91,13 @@ test('automatic startup actually activates most recent granted folder and select
   assert.equal(x.app.getState().root,x.picked);
 });
 
-test('startup with prompt does not open media, but selects last name and exposes retry',async()=>{
+test('startup with prompt leaves the placeholder selected and exposes retry',async()=>{
   const x=harness({prompt:'prompt'});
   x.saved.set('last',{id:'last',name:x.picked.name,handle:x.picked,lastUsed:123});
   await x.app.restoreRecents();
   assert.ok(!x.events.some(v=>v.startsWith('activate:')));
-  assert.equal(x.dropdown.value,'last');
+  assert.equal(x.dropdown.value,'');
+  assert.ok(x.dropdown.options.some(o=>o.value==='last'));
   assert.equal(x.retry.hidden,false);
   assert.ok(x.retry.title.includes('Pictures-special'));
   assert.ok(x.events.includes('status:Permission needed'));
@@ -121,12 +122,25 @@ test('denied permission can be retried from ↻ with same selected option',async
   x.saved.set('last',{id:'last',name:x.picked.name,handle:x.picked,lastUsed:123});
   await x.app.restoreRecents();
   assert.equal(await x.app.selectRememberedLibrary('last'),false);
-  assert.equal(x.dropdown.value,'last');
+  assert.equal(x.dropdown.value,'');
   assert.equal(x.retry.hidden,false);
   x.app.setPermission('granted');
-  assert.equal(await x.app.selectRememberedLibrary(x.dropdown.value),true);
+  assert.equal(await x.app.reconnectRememberedLibrary(),true);
   assert.deepEqual(x.events.filter(z=>z==='request'),['request','request']);
   assert.ok(x.events.includes('loaded:16 files'));
+});
+
+test('switching between remembered folders selects and persists only the opened folder',async()=>{
+  const x=harness();
+  const other=x.env.makeHandle('Other library');
+  x.saved.set('last',{id:'last',name:x.picked.name,handle:x.picked,lastUsed:123});
+  x.saved.set('other',{id:'other',name:other.name,handle:other,lastUsed:50});
+  await x.app.restoreRecents();
+  assert.equal(x.dropdown.value,'last');
+  assert.equal(await x.app.selectRememberedLibrary('other'),true);
+  assert.equal(x.app.getState().root,other);
+  assert.equal(x.dropdown.value,'other');
+  assert.equal(x.app.getState().recentLibraries[0].id,'other');
 });
 
 test('manual picker selection always shows the active library, even if browser storage fails',async()=>{
@@ -153,7 +167,7 @@ test('remembering a manual library persists the actual native handle when storag
 test('name-only fallback is accurately labeled and opens picker, not silent media access',async()=>{
   const x=harness({nameHint:'Pictures-special'});
   await x.app.restoreRecents();
-  assert.equal(x.dropdown.value,'__reselect__');
+  assert.equal(x.dropdown.value,'');
   assert.equal(x.retry.hidden,false);
   assert.ok(x.dropdown.options.some(o=>o.text==='Pictures-special (reselect folder)'));
   assert.ok(!x.events.some(v=>v.startsWith('activate:')));
@@ -192,7 +206,7 @@ test('manual choice is never overwritten by a delayed automatic restore',async()
 test('header handlers remain connected directly to dropdown and retry button',()=>{
   assert.match(html,/id="reconnectLibrary"/);
   assert.match(js,/el\('recentFolders'\)\.onchange=e=>\{void selectRememberedLibrary\(e\.target\.value\)\}/);
-  assert.match(js,/el\('reconnectLibrary'\)\.onclick=\(\)=>\{void selectRememberedLibrary\(el\('recentFolders'\)\.value\)\}/);
+  assert.match(js,/el\('reconnectLibrary'\)\.onclick=\(\)=>\{void reconnectRememberedLibrary\(\)\}/);
   assert.match(js,/if\(!await loadIndex\(\)\)await scan\(\)/);
   assert.doesNotThrow(()=>new Function(js));
 });

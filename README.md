@@ -85,7 +85,7 @@ The launcher uses a **stable, folder-specific port** so different installed copi
 
 To stop the launcher, close its terminal window or press **Ctrl+C**. Direct double-clicking `index.html` remains available; the Node.js launcher is not required for any other gallery feature.
 
-**Reopening your library:** The gallery saves recent native folder handles in this browser's IndexedDB. On startup, it selects the last-used folder and actually loads its photos **when the browser already grants read/write access**. If access requires renewed permission, the folder name stays selected and the status says **Permission needed**. Click **↻** next to the library selector, or select another remembered folder, to request access and load the gallery. Choosing the same already-selected option in a native dropdown doesn't fire a change event; ↻ is the reliable retry action.
+**Reopening your library:** The gallery saves recent native folder handles in this browser's IndexedDB. On startup, it selects the last-used folder and loads its photos **when the browser already grants read/write access**. If renewed permission is required, the selector shows **Select library…** and the status says **Permission needed**. Choose the last-used folder (or another remembered folder) in the dropdown, or click **↻** to request access. The selected folder name reflects the library that is actually open.
 
 If browser storage cannot retain the native folder handle, the gallery shows **`Folder name (current session)`** after manual opening and a warning. On the next launch it can show **`Folder name (reselect folder)`**, which opens the system picker; a remembered name alone cannot reopen files. If Chrome offers **Allow on every visit** when approving folder access, use that option to keep permission across sessions. The browser may require approval again, especially with locally opened `file://` pages; the gallery cannot override that security requirement. See [Chrome's file permission documentation](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api).
 
@@ -100,7 +100,7 @@ If browser storage cannot retain the native folder handle, the gallery shows **`
 | **Search** | Find items by filename, path, or tag. The header shows only `82 results · showing 80 / 76 034 files` (example); hover for detailed filter matches. |
 | **All folders / Fix folder** | Browse one folder and its descendants; lock the folder scope while selecting collections. |
 | **Photos & videos** | Show all supported media, only photos, or only videos. |
-| **Select library… / ↻** | The last library is selected on startup; if it wasn't loaded because permission is missing, click ↻ to request access and actually reopen it. |
+| **Select library… / ↻** | The last library is selected on startup when it opens successfully; otherwise choose a remembered library or click ↻ to request access. |
 | **Classic / Instagram mode** | Switch between labeled thumbnails and a compact, gapless square grid. |
 | **Albums / Tags · OFF** | Select one album *or* one tag. |
 | **Albums / Tags · OR** | Show media matching **any** selected album, tag, Favorites, or Trash category. |

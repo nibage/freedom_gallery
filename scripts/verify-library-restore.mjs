@@ -87,7 +87,15 @@ async function setup(permission,withSecond=false){
   await page.evaluate(async()=>{
     const records=[{id:'last',name:window.__root.name,handle:window.__root,lastUsed:100}];
     if(window.__hasSecond)records.push({id:'other',name:'Other demo',handle:window.__second,lastUsed:50});
-    window.getRecentLibraries=async()=>records;
+    window.getRecentLibraries=async()=>[...records].sort((a,b)=>b.lastUsed-a.lastUsed);
+    const originalPrefsOp=prefsOp;
+    window.prefsOp=async(mode,operation)=>{
+      if(mode!=='readwrite')return originalPrefsOp(mode,operation);
+      return operation({
+        put(item){const i=records.findIndex(r=>r.id===item.id);if(i<0)records.push(item);else records[i]=item;return {result:item};},
+        delete(id){const i=records.findIndex(r=>r.id===id);if(i>=0)records.splice(i,1);return {result:undefined};}
+      })?.result;
+    };
     await restoreRecents();
   });
   return {context,page};
@@ -111,24 +119,38 @@ try{
   // 2: Expired permission: library is displayed and ↻ reopens real media.
   {
     const {context,page}=await setup('prompt');
-    assert.equal(await page.locator('#recentFolders').inputValue(),'last');
+    assert.equal(await page.locator('#recentFolders').inputValue(),'');
     assert.equal(await page.locator('#reconnectLibrary').isVisible(),true);
     assert.match(await page.locator('#status').textContent(),/Permission needed/);
     assert.equal(await page.locator('#gallery .photo').count(),0);
     await page.locator('#reconnectLibrary').click();
     await waitForMedia(page);
     assert.ok(await page.evaluate(()=>window.__requests)>=1);
+    await page.waitForFunction(()=>document.getElementById('recentFolders').value==='last');
     console.log('PASS browser: pending folder reconnect loads real gallery via user click');
     await context.close();
   }
 
-  // 3: Selecting another saved folder in the native dropdown triggers loading.
+  // 3: Selecting the previously used folder itself must trigger loading.
+  {
+    const {context,page}=await setup('prompt');
+    assert.equal(await page.locator('#recentFolders').inputValue(),'');
+    await page.locator('#recentFolders').selectOption('last');
+    await waitForMedia(page);
+    await page.waitForFunction(()=>document.getElementById('recentFolders').value==='last');
+    assert.ok(await page.evaluate(()=>window.__requests)>=1);
+    console.log('PASS browser: selecting the last library requests access and loads media');
+    await context.close();
+  }
+
+  // 4: Selecting another saved folder in the native dropdown triggers loading.
   {
     const {context,page}=await setup('prompt',true);
-    assert.equal(await page.locator('#recentFolders').inputValue(),'last');
+    assert.equal(await page.locator('#recentFolders').inputValue(),'');
     await page.locator('#recentFolders').selectOption('other');
     await waitForMedia(page);
     assert.ok(await page.evaluate(()=>window.__requests)>=1);
+    await page.waitForFunction(()=>document.getElementById('recentFolders').value==='other');
     console.log('PASS browser: dropdown change invokes real gallery activation');
     await context.close();
   }
