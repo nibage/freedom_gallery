@@ -155,6 +155,39 @@ try{
     console.log('PASS browser: dropdown change invokes real gallery activation');
     await context.close();
   }
+  // 5: Clear cache works with the actual browser database and local storage.
+  {
+    const {context,page}=await setup('granted');
+    await waitForMedia(page);
+    await page.evaluate(async()=>{
+      await uiPrefsOp('readwrite',store=>store.put({id:'layout',value:'instagram'}));
+      for(const key of [THEME_KEY,LAST_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY])
+        localStorage.setItem(key,'test-reset');
+      localStorage.setItem('unrelated-app-test','keep');
+    });
+    await page.locator('#clearCache').click();
+    await page.locator('#collectionDialogCancel').click();
+    assert.equal(await page.evaluate(()=>localStorage.getItem(THEME_KEY)),'test-reset');
+    await page.locator('#clearCache').click();
+    await Promise.all([
+      page.waitForNavigation({waitUntil:'domcontentloaded'}),
+      page.locator('#collectionDialogAccept').click()
+    ]);
+    await page.waitForFunction(()=>!document.getElementById('collectionDialog').open);
+    const state=await page.evaluate(async()=>({
+      keys:[THEME_KEY,LAST_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY].map(key=>localStorage.getItem(key)),
+      unrelated:localStorage.getItem('unrelated-app-test'),
+      libraries:await getRecentLibraries(),
+      layout:await uiPrefsOp('readonly',store=>store.get('layout'))
+    }));
+    assert.deepEqual(state.keys,[null,null,null,null]);
+    assert.equal(state.unrelated,'keep');
+    assert.deepEqual(state.libraries,[]);
+    assert.equal(state.layout,undefined);
+    assert.equal(await page.locator('#gallery .photo').count(),0);
+    console.log('PASS browser: clear cache resets the actual app database and leaves unrelated storage intact');
+    await context.close();
+  }
 }finally{
   await browser.close();
   await new Promise(resolve=>server.close(resolve));
