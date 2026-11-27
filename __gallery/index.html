@@ -814,10 +814,10 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     white-space:nowrap;
   }
   .top-right .recent-chooser{
-    flex:0 0 136px;
-    width:136px;
-    min-width:136px;
-    max-width:136px;
+    flex:0 0 180px;
+    width:180px;
+    min-width:180px;
+    max-width:180px;
   }
   .top-right .theme-label{
     flex:0 0 auto;
@@ -891,6 +891,10 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   flex:1 1 0;min-width:0;max-width:none;white-space:normal;
   overflow-wrap:normal;min-height:38px;height:auto;padding:5px 2px;
 }
+/* Redistribute the removed theme label's space to the library chooser. */
+@media(max-width:1799px){
+  .top-right .recent-chooser{width:180px;min-width:115px;max-width:180px;flex:0 1 180px}
+}
 </style>
 </head>
 <body>
@@ -914,7 +918,7 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     <select id="recentFolders" class="recent-chooser" aria-label="Recently opened libraries" title="Recently used libraries" hidden><option value="">Select library…</option></select>
     <button class="btn" id="forget" hidden title="Remove the current library from this browser's remembered list. Files are unchanged.">Remove library</button>
     <button class="btn primary" id="openFolder">📁 Open library</button>
-    <label class="theme-label" for="themeSelect">Theme
+    <label class="theme-label" for="themeSelect">
       <select id="themeSelect" title="Follow your system theme or choose Light or Dark" aria-label="Color theme"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select>
     </label>
   </div>
