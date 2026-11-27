@@ -63,7 +63,7 @@ function harness({records=[],prompt='granted',permission='granted',error=null,fa
     'const {el,Option,window,prefsOp,getRecentLibraries,toast,setStatus,confirmLibrarySelection,console}=env;'+
     "const MAX_RECENTS=5,PICKER_ID='test-picker';"+
     'let root=env.initialRoot,recentLibraries=env.initialRecords,selectedLibraryId=null,pendingLibraryId=null,libraryOpenToken=0;'+
-    'let prefsAvailable=true,browserResetting=false;'+
+    'let prefsAvailable=true,browserResetting=false;function persistLibraryView(){}function forgetLibraryView(){}'+
     'let thumbResetting=false,deletingMedia=false;'+
     'async function activateLibrary(handle){env.events.push("activate:"+handle.name);root=handle;selectedLibraryId=null;pendingLibraryId=null;renderRecents();env.events.push("loaded:16 files");}'+
     handlers+

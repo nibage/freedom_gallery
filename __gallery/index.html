@@ -1237,7 +1237,7 @@ function recordRenderedView(navigation=''){
     lastViewNavigation=navigation;lastSearchNavigation=now;
   }
   if(navigation&&navigation!=='search')lastViewNavigation=navigation;
-  renderedView=next;syncViewBack();
+  renderedView=next;syncViewBack();persistLibraryView();
 }
 function applySearchNavigation(){
   clearTimeout(searchNavigationTimer);searchNavigationTimer=null;
@@ -1246,7 +1246,7 @@ function applySearchNavigation(){
 function scheduleSearchNavigation(){
   clearTimeout(searchNavigationTimer);
   searchNavigationTimer=setTimeout(applySearchNavigation,150);
-  syncViewBack();
+  syncViewBack();persistLibraryView();
 }
 function goBackView(){
   if(!root||librarySwitching)return;
@@ -1255,14 +1255,41 @@ function goBackView(){
   const previous=viewHistory.pop();
   if(!previous){syncViewBack();return;}
   lastViewNavigation='';lastSearchNavigation=0;
-  collectionOperator=previous.operator;folderLocked=previous.locked;
-  selectedAlbumNames=new Set(previous.albums.filter(name=>albums.has(name)));
+  applySavedView(previous);
+}
+
+// A remembered view belongs to a verified directory-handle ID, not a folder name.
+function readLibraryViews(){
+  try{const parsed=JSON.parse(localStorage.getItem(PREFS_DB+':views')||'{}');return parsed&&typeof parsed==='object'&&!Array.isArray(parsed)?parsed:{}}catch(_){return {}}
+}
+function persistLibraryView(){
+  if(!root||librarySwitching||browserResetting||!selectedLibraryId)return;
+  try{
+    const views=readLibraryViews(),next={...captureViewState(),sidebar:collectionMode,sidebarQuery:el('collectionQuery').value};
+    if(JSON.stringify(views[selectedLibraryId])===JSON.stringify(next))return;
+    views[selectedLibraryId]=next;localStorage.setItem(PREFS_DB+':views',JSON.stringify(views));
+  }catch(e){console.warn('Could not remember current view:',e)}
+}
+function forgetLibraryView(id){
+  try{const views=readLibraryViews();delete views[id];localStorage.setItem(PREFS_DB+':views',JSON.stringify(views))}catch(_){}
+}
+async function findRememberedView(handle){
+  const views=readLibraryViews();
+  for(const entry of recentLibraries){
+    try{if(await entry.handle.isSameEntry(handle))return views[entry.id]||null}catch(_){}
+  }
+  return null;
+}
+function applySavedView(previous){
+  collectionOperator=['OFF','OR','AND'].includes(previous.operator)?previous.operator:'OFF';folderLocked=previous.locked===true;
+  selectedAlbumNames=new Set((Array.isArray(previous.albums)?previous.albums:[]).filter(name=>albums.has(name)));
   const availableTags=new Set(knownTags().map(tag=>tag.key));
-  selectedTagKeys=new Set(previous.tags.filter(key=>availableTags.has(key)));
-  selectedSpecialViews=new Set(previous.specials);
+  selectedTagKeys=new Set((Array.isArray(previous.tags)?previous.tags:[]).filter(key=>availableTags.has(key)));
+  selectedSpecialViews=new Set((Array.isArray(previous.specials)?previous.specials:[]).filter(name=>name==='favorites'||name==='trash'));
   setCollectionView();
-  el('query').value=previous.query;el('kind').value=previous.kind;
-  el('folder').value=previous.folder;
+  el('query').value=typeof previous.query==='string'?previous.query:'';el('kind').value=previous.kind||'';
+  if(el('kind').selectedIndex<0)el('kind').value='';
+  el('folder').value=previous.folder||'';
   if(el('folder').selectedIndex<0)el('folder').value='';
   try{
     localStorage.setItem(FOLDER_LOCK_KEY,String(folderLocked));
@@ -1271,7 +1298,15 @@ function goBackView(){
   syncFilterControls();clearSelection();visibleCount=80;
   renderAlbumList();renderTagList();filterAndRender('',true);
 }
-
+function restoreLibraryView(previous){
+  if(!previous||typeof previous!=='object')return;
+  // Metadata, collections, and the full folder option list are already installed.
+  switchCollections(previous.sidebar==='tags'?'tags':'albums');
+  el('collectionQuery').value=typeof previous.sidebarQuery==='string'?previous.sidebarQuery:'';
+  applySavedView(previous);
+  // Opening a library is not a Back entry.
+  viewHistory=[];lastViewNavigation='';lastSearchNavigation=0;syncViewBack();
+}
 function typeOf(path){return IMAGE_EXT.test(path)?'image':VIDEO_EXT.test(path)?'video':null}
 function setStatus(s){const status=el('status');status.textContent=s;status.title=s}
 function toast(s){const n=el('toast');n.textContent=s;n.style.display='block';clearTimeout(toast.timer);toast.timer=setTimeout(()=>n.style.display='none',5500)}
@@ -1804,11 +1839,13 @@ async function rememberLibrary(handle){
     const item={id,name:handle.name,handle,lastUsed};
     await prefsOp('readwrite',store=>store.put(item));
     selectedLibraryId=id;
+    persistLibraryView();
     recentLibraries=usableLibraryRecords(await getRecentLibraries());
     if(!recentLibraries.some(entry=>entry.id===id&&validLibraryRecord(entry)))
       throw Error('Browser did not retain the folder handle');
-    for(const entry of recentLibraries.slice(MAX_RECENTS))
-      await prefsOp('readwrite',store=>store.delete(entry.id));
+    for(const entry of recentLibraries.slice(MAX_RECENTS)){
+      await prefsOp('readwrite',store=>store.delete(entry.id));forgetLibraryView(entry.id);
+    }
     recentLibraries=recentLibraries.slice(0,MAX_RECENTS);
     pendingLibraryId=null;
     renderRecents();
@@ -1827,7 +1864,7 @@ async function forgetLibraries(){
   if(!await galleryCollectionDialog({title:'Remove remembered library?',message:`Remove “${entry?.name||'this library'}” from this browser's remembered libraries?\n\nFiles on disk remain unchanged; the currently open library stays open.`,action:'Remove library',danger:true}))return;
   try{
     await prefsOp('readwrite',store=>store.delete(selectedLibraryId));
-    selectedLibraryId=null;
+    forgetLibraryView(selectedLibraryId);selectedLibraryId=null;
     recentLibraries=usableLibraryRecords(await getRecentLibraries());
     // Keep the active folder visible as a session-only entry.
     renderRecents();
@@ -1843,7 +1880,7 @@ async function clearBrowserData(){
     request.onblocked=()=>{setStatus('Close other gallery tabs');toast('Close other Freedom Gallery tabs to finish clearing browser data.');};
   });
   // Include the retired fallback key so old app versions cannot leave ghost entries.
-  const keys=[THEME_KEY,LEGACY_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY];
+  const keys=[PREFS_DB+':views',THEME_KEY,LEGACY_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY];
   for(const key of keys)localStorage.removeItem(key);
   if(keys.some(key=>localStorage.getItem(key)!==null))throw Error('Some gallery preferences could not be removed');
 }
@@ -1869,8 +1906,9 @@ async function clearBrowserCache(){
 }
 async function activateLibrary(picked){
   if(thumbResetting||deletingMedia||scanInProgress||librarySwitching)throw Error('Wait for the current gallery operation to finish.');
-  librarySwitching=true;
+  persistLibraryView();librarySwitching=true;
   try{
+  const savedView=await findRememberedView(picked);
   await flushThumbManifest();await saveQueue.catch(()=>{});
   scanNo++;clearTimeout(fileInfoTimer);if(el('viewer').open)closeViewer();clearThumbs();
   resetViewHistory();
@@ -1883,8 +1921,9 @@ async function activateLibrary(picked){
   await loadMetadata();await loadFullPathConfig();await autoConfigureFullPath();await loadThumbManifest();await loadFileInfo();
   if(!await loadIndex())await scan();
   else if(!fileInfo.size)updateMaintenance();
+  restoreLibraryView(savedView);
   updateMaintenance();
-  }finally{librarySwitching=false}
+  }finally{librarySwitching=false;syncViewBack()}
 }
 async function openRemembered(entry,allowPrompt=true){
   if(browserResetting||!entry?.handle)return false;
@@ -2091,7 +2130,7 @@ function filterAndRender(navigation='',preserveCards=!!navigation){
   const albumSets=[...selectedAlbumNames].filter(name=>albums.has(name)).map(name=>albums.get(name));
   const tagKeys=[...selectedTagKeys],specials=[...selectedSpecialViews];
   const anyCriteria=albumSets.length>0||tagKeys.length>0||specials.length>0;
-  const globalScope=anyCriteria&&!folderLocked;
+  const globalScope=(anyCriteria||!!q)&&!folderLocked;
   filtered=images.filter(item=>{
     const path=item.path,discarded=trash.has(path);
     // Ordinary collections never reveal hidden originals. Trash is considered only
@@ -2990,7 +3029,7 @@ function renderAlbumList(){
   }
   navButtonActive();syncBulkAlbums();
 }
-function switchCollections(mode){ collectionMode=mode==='tags'?'tags':'albums'; el('showAlbums').classList.toggle('active',collectionMode==='albums'); el('showTags').classList.toggle('active',collectionMode==='tags'); el('showAlbums').setAttribute('aria-pressed',String(collectionMode==='albums')); el('showTags').setAttribute('aria-pressed',String(collectionMode==='tags')); el('collectionQuery').value=''; el('collectionQuery').placeholder=collectionMode==='albums'?'Search albums…':'Search tags…'; el('albumList').hidden=collectionMode!=='albums'; el('tagList').hidden=collectionMode!=='tags'; el('tagEmpty').hidden=true; renderAlbumList(); renderTagList(); }
+function switchCollections(mode){ collectionMode=mode==='tags'?'tags':'albums'; el('showAlbums').classList.toggle('active',collectionMode==='albums'); el('showTags').classList.toggle('active',collectionMode==='tags'); el('showAlbums').setAttribute('aria-pressed',String(collectionMode==='albums')); el('showTags').setAttribute('aria-pressed',String(collectionMode==='tags')); el('collectionQuery').value=''; el('collectionQuery').placeholder=collectionMode==='albums'?'Search albums…':'Search tags…'; el('albumList').hidden=collectionMode!=='albums'; el('tagList').hidden=collectionMode!=='tags'; el('tagEmpty').hidden=true; renderAlbumList(); renderTagList(); persistLibraryView(); }
 async function addCollection(){
   if(!root)return;
   if(collectionMode==='albums'){await newAlbum();return}
@@ -3359,6 +3398,7 @@ el('folderLock').onchange=e=>{
   try{localStorage.setItem(FOLDER_LOCK_KEY,String(folderLocked))}catch(_){}
   syncFilterControls();clearSelection();filterAndRender('filter',true);
 };
+el('collectionQuery').addEventListener('input',persistLibraryView);
 el('collectionQuery').addEventListener('input',debounce(()=>{if(collectionMode==='albums')renderAlbumList();else renderTagList()},90));
 el('newCollection').onclick=()=>void addCollection(); el('removeCollection').onclick=()=>void removeCollection();
 el('query').addEventListener('input',scheduleSearchNavigation);
@@ -3454,6 +3494,9 @@ document.addEventListener('keydown',e=>{
       return;
     }
   }
+  if(el('viewer').open&&e.code==='Space'&&!editing&&!e.ctrlKey&&!e.metaKey&&!e.altKey&&!document.querySelector('dialog[open]:not(#viewer)')){
+    const video=el('bigVideo');if(!video.hidden){e.preventDefault();if(!e.repeat){if(video.paused||video.ended){void video.play().catch(err=>toast('Could not play video: '+err.message))}else video.pause()}return;}
+  }
   if(el('viewer').open){ if(['INPUT','TEXTAREA','SELECT','VIDEO'].includes(document.activeElement?.tagName)) return; if(e.key==='ArrowLeft') moveViewer(-1); else if(e.key==='ArrowRight') moveViewer(1); else if(e.key.toLowerCase()==='f'&&currentPath){ toggleFavorite(currentPath); if(activeView.type==='favorites')filterAndRender(); else renderCards(); updateViewerFavorite(); } return; }
   if(e.key==='Escape' && selectedPaths.size){ clearSelection(); return; }
   if(e.key==='/'&&!['INPUT','TEXTAREA'].includes(document.activeElement?.tagName)){ e.preventDefault(); el('query').focus(); }
@@ -3543,7 +3586,7 @@ syncGalleryHeaderHeight();
 if(window.ResizeObserver)new ResizeObserver(syncGalleryHeaderHeight).observe(galleryTopbar);
 else window.addEventListener('resize',syncGalleryHeaderHeight);
 
-window.addEventListener('pagehide',()=>{if(thumbDirty)void flushThumbManifest()});
+window.addEventListener('pagehide',()=>{persistLibraryView();if(thumbDirty)void flushThumbManifest()});
 </script>
 </body>
 </html>

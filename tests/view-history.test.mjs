@@ -19,7 +19,7 @@ function harness(){
     renderAlbumList(){},renderTagList(){},navButtonActive(){},renderCards(){},clearSelection(){},syncFilterControls(){},knownTags:()=>[{key:'water'}]};
   const api=new Function('env',
     'const {el,images,albums,tags,favorites,trash,localStorage,renderAlbumList,renderTagList,navButtonActive,renderCards,clearSelection,syncFilterControls,knownTags}=env;'+
-    "let root={},librarySwitching=false,selectedAlbumNames=new Set(),selectedTagKeys=new Set(),selectedSpecialViews=new Set(),collectionOperator='OFF',folderLocked=true,activeView={type:'all'},filtered=[],visibleCount=80;const FOLDER_LOCK_KEY='lock',COLLECTION_OPERATOR_KEY='operator';"+
+    "let root={},librarySwitching=false,browserResetting=false,selectedLibraryId=null,selectedAlbumNames=new Set(),selectedTagKeys=new Set(),selectedSpecialViews=new Set(),collectionOperator='OFF',folderLocked=true,activeView={type:'all'},filtered=[],visibleCount=80;const FOLDER_LOCK_KEY='lock',COLLECTION_OPERATOR_KEY='operator';"+
     collections+history+filters+
     ";return {filterAndRender,goBackView,resetViewHistory,scheduleSearchNavigation,chooseCollection,chooseSpecialView,state:()=>({view:captureViewState(),results:filtered.map(x=>x.path),history:viewHistory.length,backDisabled:el('viewBack').disabled}),mode:(operator,locked)=>{collectionOperator=operator;folderLocked=locked;filterAndRender('filter')},newRoot:()=>{resetViewHistory();root={};el('query').value=el('folder').value=el('kind').value='';resetCollections();filterAndRender()}}"
   )(env);

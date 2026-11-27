@@ -178,3 +178,7 @@ For the exhaustive feature history and older version notes, see [the archived te
 
 Your indexed files and original media remain on your computer; the app does not upload them. Browser read/write permission is needed because the gallery intentionally writes its **human-readable metadata** beside your media. See [LICENSE](LICENSE) for the repository's license.
 
+
+### Remembered view and search scope
+
+Each remembered library restores its own last folder, search, format, album/collection/tag/Favorites/Trash combination, OFF/OR/AND mode and folder lock. The sidebar mode and search are also remembered. Clear cache removes saved views; removing a remembered library forgets its view. An unlocked folder still scopes ordinary browsing, but a non-empty search or selected collection criterion searches the whole library (other filters remain active). Lock folder limits all results to that folder and its descendants. Space in an open video preview toggles play/pause.
