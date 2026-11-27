@@ -28,7 +28,7 @@ test('filter toolbar is no longer a separately sticky main element',()=>{
 test('search is compact and right-aligned, results stay visible and details appear on hover',()=>{
   assert.match(html,/\.top > \.filters > #query\{[\s\S]*?max-width:220px;[\s\S]*?margin-left:auto;/);
   const header=html.slice(html.indexOf('<header class="top">'),html.indexOf('</header>'));
-  assert.match(header,/id="query"[^>]*>\s*<select id="kind"[\s\S]*?id="viewBack"[\s\S]*?id="layoutToggle"/);
+  assert.match(header,/id="query"[^>]*>\s*<select id="folder"[\s\S]*?id="folderLock"[\s\S]*?id="kind"[\s\S]*?id="viewBack"[\s\S]*?id="layoutToggle"/);
   assert.match(html,/node\.textContent=filtered\.length\.toLocaleString/);
   assert.match(html,/node\.title=prefix\+filtered\.length/);
   assert.match(html,/el\('libraryName'\)\.title=picked\.name/);
