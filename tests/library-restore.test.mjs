@@ -11,7 +11,8 @@ const slice=(start,end)=>{
   return js.slice(from,to);
 };
 // Run the real production handlers, with only storage and actual disk I/O faked.
-const handlers=slice('function renderRecents(){','async function forgetLibraries(){')
+const handlers=slice('function validLibraryRecord(entry){','async function getRecentLibraries(){')
+  +slice('function renderRecents(){','async function forgetLibraries(){')
   +slice('async function openRemembered(entry,allowPrompt=true){','function navButtonActive(){');
 
 class Select {
@@ -20,7 +21,7 @@ class Select {
   add(option){this.options.push(option);}
 }
 
-function harness({records=[],prompt='granted',permission='granted',error=null,failSave=false,nameHint='',lastRoot=null}={}){
+function harness({records=[],prompt='granted',permission='granted',error=null,failSave=false,lastRoot=null}={}){
   const status={title:''},forget={hidden:true},dropdown=new Select();
   const nodes={recentFolders:dropdown,forget,status};
   const events=[],notices=[],saved=new Map(records.map(x=>[x.id,x]));
@@ -47,30 +48,28 @@ function harness({records=[],prompt='granted',permission='granted',error=null,fa
       return fn(store)?.result;
     },
     getRecentLibraries:async()=>[...saved.values()].sort((a,b)=>b.lastUsed-a.lastUsed),
-    rememberLibraryName:n=>{env.nameHint=n;},
     toast:message=>notices.push(message),
     setStatus:value=>{events.push('status:'+value);status.title=value;},
     confirmLibrarySelection:async()=>true,
     console:{warn:()=>{}},
     makeHandle,
     picked,
-    nameHint,
     initialRecords:[...saved.values()],
     initialRoot:lastRoot,
     events,
     notices
   };
   const factory=new Function('env',
-    'const {el,Option,window,prefsOp,getRecentLibraries,rememberLibraryName,toast,setStatus,confirmLibrarySelection,console}=env;'+
+    'const {el,Option,window,prefsOp,getRecentLibraries,toast,setStatus,confirmLibrarySelection,console}=env;'+
     "const MAX_RECENTS=5,PICKER_ID='test-picker';"+
-    'let root=env.initialRoot,recentLibraries=env.initialRecords,selectedLibraryId=null,pendingLibraryId=null,libraryOpenToken=0,lastLibraryHint=env.nameHint;'+
+    'let root=env.initialRoot,recentLibraries=env.initialRecords,selectedLibraryId=null,pendingLibraryId=null,libraryOpenToken=0;'+
     'let prefsAvailable=true,browserResetting=false;'+
     'let thumbResetting=false,deletingMedia=false;'+
-    'async function activateLibrary(handle){env.events.push("activate:"+handle.name);root=handle;selectedLibraryId=null;pendingLibraryId=null;rememberLibraryName(handle.name);renderRecents();env.events.push("loaded:16 files");}'+
+    'async function activateLibrary(handle){env.events.push("activate:"+handle.name);root=handle;selectedLibraryId=null;pendingLibraryId=null;renderRecents();env.events.push("loaded:16 files");}'+
     handlers+
     ';return {renderRecents,rememberLibrary,openRemembered,restoreRecents,selectRememberedLibrary,chooseFolder,'+
-    'getState:()=>({root,selectedLibraryId,pendingLibraryId,recentLibraries,lastLibraryHint,libraryOpenToken}),'+
-    'setPermission:v=>env.setPermission(v),setHandleRoot:v=>{root=v},setNameHint:v=>{lastLibraryHint=v}}'
+    'getState:()=>({root,selectedLibraryId,pendingLibraryId,recentLibraries,libraryOpenToken}),'+
+    'setPermission:v=>env.setPermission(v),setHandleRoot:v=>{root=v}}'
   );
   env.setPermission=value=>{permissionResult=value;permissionError=null;};
   const app=factory(env);
@@ -158,26 +157,35 @@ test('remembering a manual library persists the actual native handle when storag
   assert.equal(x.dropdown.options.find(o=>o.value===saved.id)?.text,'Pictures-special');
 });
 
-test('name-only fallback is accurately labeled and opens picker, not silent media access',async()=>{
-  const x=harness({nameHint:'Pictures-special'});
+test('empty startup never reconstructs a name-only library',async()=>{
+  const x=harness();
   await x.app.restoreRecents();
   assert.equal(x.dropdown.value,'');
-  assert.ok(x.dropdown.options.some(o=>o.text==='Pictures-special (reselect folder)'));
+  assert.equal(x.dropdown.hidden,true);
+  assert.deepEqual(x.dropdown.options.map(o=>o.value),['']);
   assert.ok(!x.events.some(v=>v.startsWith('activate:')));
-  await x.app.selectRememberedLibrary('__reselect__');
-  assert.ok(x.events.includes('picker'));
-  assert.ok(x.events.includes('loaded:16 files'));
+  assert.doesNotMatch(js,/lastLibraryHint|rememberLibraryName|__reselect__/);
+  assert.match(js,/localStorage\.removeItem\(LEGACY_LIBRARY_NAME_KEY\)/);
 });
-
-test('stale stored handle falls back to a real picker instead of doing nothing',async()=>{
+test('malformed stored handles are ignored and manual picker remains available',async()=>{
   const x=harness();
   x.saved.set('bad',{id:'bad',name:'Pictures-special',handle:{name:'Pictures-special'},lastUsed:2});
   await x.app.restoreRecents();
-  assert.equal(await x.app.selectRememberedLibrary('bad'),true);
+  assert.equal(x.dropdown.hidden,true);
+  assert.ok(!x.dropdown.options.some(o=>o.value==='bad'));
+  assert.ok(!x.events.includes('query'));
+  await x.app.chooseFolder();
   assert.ok(x.events.includes('picker'));
   assert.ok(x.events.includes('loaded:16 files'));
 });
-
+test('invalid recent record does not hide an older valid library',async()=>{
+  const x=harness();
+  x.saved.set('bad',{id:'bad',name:'Ghost',lastUsed:200});
+  x.saved.set('last',{id:'last',name:x.picked.name,handle:x.picked,lastUsed:100});
+  await x.app.restoreRecents();
+  assert.equal(x.dropdown.value,'last');
+  assert.ok(!x.dropdown.options.some(o=>o.value==='bad'));
+});
 test('manual choice is never overwritten by a delayed automatic restore',async()=>{
   const x=harness();
   let unblock;

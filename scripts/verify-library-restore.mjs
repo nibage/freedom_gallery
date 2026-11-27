@@ -161,7 +161,14 @@ try{
     await waitForMedia(page);
     await page.evaluate(async()=>{
       await uiPrefsOp('readwrite',store=>store.put({id:'layout',value:'instagram'}));
-      for(const key of [THEME_KEY,LAST_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY])
+      // Seed actual IndexedDB, bypassing the mock filesystem's prefsOp override.
+      const db=await openPrefsDB();
+      try{await new Promise((resolve,reject)=>{
+        const tx=db.transaction(PREFS_STORE,'readwrite');
+        tx.objectStore(PREFS_STORE).put({id:'stale',name:'Ghost library',lastUsed:42,handle:{kind:'directory'}});
+        tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);
+      })}finally{db.close()}
+      for(const key of [THEME_KEY,LEGACY_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY])
         localStorage.setItem(key,'test-reset');
       localStorage.setItem('unrelated-app-test','keep');
     });
@@ -175,9 +182,9 @@ try{
     ]);
     await page.waitForFunction(()=>!document.getElementById('collectionDialog').open);
     const state=await page.evaluate(async()=>({
-      keys:[THEME_KEY,LAST_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY].map(key=>localStorage.getItem(key)),
+      keys:[THEME_KEY,LEGACY_LIBRARY_NAME_KEY,FOLDER_LOCK_KEY,COLLECTION_OPERATOR_KEY].map(key=>localStorage.getItem(key)),
       unrelated:localStorage.getItem('unrelated-app-test'),
-      libraries:await getRecentLibraries(),
+      libraries:await prefsOp('readonly',store=>store.getAll()),
       layout:await uiPrefsOp('readonly',store=>store.get('layout'))
     }));
     assert.deepEqual(state.keys,[null,null,null,null]);
@@ -185,6 +192,7 @@ try{
     assert.deepEqual(state.libraries,[]);
     assert.equal(state.layout,undefined);
     assert.equal(await page.locator('#gallery .photo').count(),0);
+    assert.equal(await page.locator('#recentFolders').isHidden(),true);
     console.log('PASS browser: clear cache resets the actual app database and leaves unrelated storage intact');
     await context.close();
   }

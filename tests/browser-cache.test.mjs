@@ -8,10 +8,10 @@ function harness({confirm=true,fail=false,busy=false}={}){
   const events=[],keys=new Map(['theme','last','lock','operator','other-app'].map(k=>[k,'saved']));
   const button={disabled:false},body={inert:false};
   const env={events,keys,button,body,indexedDB:{deleteDatabase(name){events.push('delete:'+name);const req={error:Error('blocked storage')};Promise.resolve().then(()=>fail?req.onerror():req.onsuccess());return req}},
-    localStorage:{removeItem(k){keys.delete(k)}},document:{body},location:{reload(){events.push('reload')}},
+    localStorage:{removeItem(k){keys.delete(k)},getItem(k){return keys.get(k)??null}},document:{body},location:{reload(){events.push('reload')}},
     el:()=>button,toast:s=>events.push(s),setStatus:s=>events.push(s),galleryCollectionDialog:async()=>confirm,busy};
   const run=new Function('env','const {indexedDB,localStorage,document,location,el,toast,setStatus,galleryCollectionDialog}=env;'+
-    "let browserResetting=false,librarySwitching=env.busy,scanInProgress=false,thumbResetting=false,deletingMedia=false,pendingSaves=0,libraryOpenToken=0;const PREFS_DB='gallery-db',THEME_KEY='theme',LAST_LIBRARY_NAME_KEY='last',FOLDER_LOCK_KEY='lock',COLLECTION_OPERATOR_KEY='operator';"+source+';return clearBrowserCache')(env);
+    "let browserResetting=false,librarySwitching=env.busy,scanInProgress=false,thumbResetting=false,deletingMedia=false,pendingSaves=0,libraryOpenToken=0;const PREFS_DB='gallery-db',THEME_KEY='theme',LEGACY_LIBRARY_NAME_KEY='last',FOLDER_LOCK_KEY='lock',COLLECTION_OPERATOR_KEY='operator';"+source+';return clearBrowserCache')(env);
   return {...env,run};
 }
 test('confirmed cache reset deletes only app database and preferences and reloads',async()=>{

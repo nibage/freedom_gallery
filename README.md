@@ -87,7 +87,7 @@ To stop the launcher, close its terminal window or press **Ctrl+C**. Direct doub
 
 **Reopening your library:** The gallery saves recent native folder handles in this browser's IndexedDB. On startup, it selects the last-used folder and loads its photos **when the browser already grants read/write access**. If renewed permission is required, the selector shows **Select library…** and the status says **Permission needed**. Choose the last-used folder (or another remembered folder) in the dropdown to request access. The selected folder name reflects the library that is actually open.
 
-If browser storage cannot retain the native folder handle, the gallery shows **`Folder name (current session)`** after manual opening and a warning. On the next launch it can show **`Folder name (reselect folder)`**, which opens the system picker; a remembered name alone cannot reopen files. If Chrome offers **Allow on every visit** when approving folder access, use that option to keep permission across sessions. The browser may require approval again, especially with locally opened `file://` pages; the gallery cannot override that security requirement. See [Chrome's file permission documentation](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api).
+If browser storage cannot retain the native folder handle, the gallery shows **`Folder name (current session)`** after manual opening and a warning. On the next launch only valid saved directory handles are listed. A legacy name-only shortcut is discarded automatically; use **Open library** if no valid handle remains. If Chrome offers **Allow on every visit** when approving folder access, use that option to keep permission across sessions. The browser may require approval again, especially with locally opened `file://` pages; the gallery cannot override that security requirement. See [Chrome's file permission documentation](https://developer.chrome.com/blog/persistent-permissions-for-the-file-system-access-api).
 
 **Browser support:** Chrome and Edge use the File System Access API. Firefox does not provide the persistent writable-folder access required by this application. It runs locally on supported versions of Windows, Linux, and macOS; browser permissions are specific to each machine.
 
@@ -109,7 +109,7 @@ If browser storage cannot retain the native folder handle, the gallery shows **`
 | **Favorites / Trash** | Organize favorites; in-gallery Trash is reversible until you explicitly delete permanently. |
 | **Rebuild index** | Rescan your actual directory tree after files are added, moved, or renamed. |
 | **Remove thumbs** | Recreate cached previews if they are stale or broken. |
-| **Clear cache** | Confirm a reset of this app URL's browser database and preferences, then reload. Does not remove on-disk files, metadata, index or thumbnails. Browser-managed folder permissions may remain. Close other gallery tabs first. |
+| **Clear cache** | Confirm a reset of this app URL's browser database and preferences (including retired name-only shortcuts), then reload. Does not remove on-disk files, metadata, index or thumbnails. Browser-managed folder permissions may remain. Close other gallery tabs first. |
 | **Theme** | System, Light, or Dark. |
 
 The visible results count remains useful when filters are active. The status beside the library controls says **loaded from index** when existing saved metadata was used. It shows scanning or other activity when appropriate; it does **not** repeat the total number of files.
