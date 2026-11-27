@@ -11,7 +11,7 @@ test('one unified header contains all gallery filters',()=>{
   assert.match(header,/class="top-left"/);
   assert.match(header,/class="filters"/);
   assert.match(header,/class="top-right"/);
-  for(const id of ['query','folder','folderLock','kind','layoutToggle']){
+  for(const id of ['query','folder','folderLock','kind','viewBack','layoutToggle']){
     assert.match(header,new RegExp('id="'+id+'"'));
   }
   assert.doesNotMatch(body,/class="filters"/);
@@ -25,9 +25,10 @@ test('filter toolbar is no longer a separately sticky main element',()=>{
   assert.match(html,/@media\(max-width:680px\)/);
 });
 
-test('search is wider, results stay visible and details appear on hover',()=>{
-  assert.match(html,/max-width:440px/);
-  assert.match(html,/max-width:540px/);
+test('search is compact and right-aligned, results stay visible and details appear on hover',()=>{
+  assert.match(html,/\.top > \.filters > #query\{[\s\S]*?max-width:220px;[\s\S]*?margin-left:auto;/);
+  const header=html.slice(html.indexOf('<header class="top">'),html.indexOf('</header>'));
+  assert.match(header,/id="kind"[\s\S]*?id="viewBack"[\s\S]*?id="layoutToggle"[\s\S]*?id="query"/);
   assert.match(html,/node\.textContent=filtered\.length\.toLocaleString/);
   assert.match(html,/node\.title=prefix\+filtered\.length/);
   assert.match(html,/el\('libraryName'\)\.title=picked\.name/);
@@ -41,7 +42,7 @@ test('inline gallery JavaScript still parses',()=>{
 
 test('media-type selector is wide enough and matches top header buttons',()=>{
   assert.match(html,/\.top > \.filters > #kind\{[\s\S]*?min-width:184px;/);
-  assert.match(html,/\.top > \.filters > :is\(#query,#folder,#kind,#layoutToggle,\.folder-lock\)[\s\S]*?height:38px!important;/);
+  assert.match(html,/\.top > \.filters > :is\(#query,#folder,#kind,#layoutToggle,#viewBack,\.folder-lock\)[\s\S]*?height:38px!important;/);
   assert.match(html,/font-size:13px!important;/);
   assert.match(html,/Photos & videos/);
 });
@@ -54,12 +55,12 @@ test('library name is not duplicated beside the results count',()=>{
   assert.match(header,/id="recentFolders"/);
 });
 
-test('wide-screen header uses one grid row, protects full counts, and lets search fill leftovers',()=>{
+test('wide-screen header uses one grid row, protects full counts, and keeps search compact',()=>{
   assert.match(html,/@media \(min-width:1800px\)\{/);
   assert.match(html,/grid-template-columns:max-content minmax\(0,1fr\) max-content;/);
   assert.match(html,/grid-template-areas:"brand filters actions";/);
   assert.match(html,/\.top-left #results\{[\s\S]*?min-width:max-content;[\s\S]*?overflow:visible;/);
-  assert.match(html,/\.top > \.filters > #query\{[\s\S]*?flex:1 1 0%;[\s\S]*?min-width:105px;[\s\S]*?max-width:none;/);
+  assert.match(html,/\.top > \.filters > #query\{[\s\S]*?flex:0 1 220px;[\s\S]*?min-width:105px;[\s\S]*?max-width:220px;/);
   assert.match(html,/\.top-right\{[\s\S]*?flex-wrap:nowrap;/);
   assert.match(html,/\.top-right #status\{[\s\S]*?min-width:0;/);
   assert.match(html,/@media \(min-width:1751px\) and \(max-width:1799px\)/);

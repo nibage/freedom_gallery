@@ -574,7 +574,7 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
 /* v7.8.1: match the compact controls on the right side of the header.
    Native selects need smaller font + padding to fit completely within 38px. */
 .filters {align-items:center;}
-.top > .filters > :is(#query,#folder,#kind,#layoutToggle,.folder-lock) {
+.top > .filters > :is(#query,#folder,#kind,#layoutToggle,#viewBack,.folder-lock) {
   box-sizing:border-box;
   height:38px!important;
   min-height:38px!important;
@@ -590,7 +590,6 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
   padding-inline:10px 30px!important;
   white-space:nowrap;
 }
-.top > .filters > #query {padding-inline:10px!important;}
 .top > .filters > .folder-lock {
   display:inline-flex;align-items:center;justify-content:center;
   padding-inline:8px!important;
@@ -659,12 +658,6 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
   background:transparent!important;
   border:0!important;
 }
-.top > .filters > #query{
-  flex:0 1 220px;
-  width:220px;
-  min-width:145px;
-  max-width:240px;
-}
 .top > .filters > #folder{
   flex:0 1 190px;
   width:190px;
@@ -701,7 +694,8 @@ body.show-selection-actions.has-selection .chip-action-label {z-index:5;pointer-
 html[data-theme="light"] .top > .filters > input,
 html[data-theme="light"] .top > .filters > select,
 html[data-theme="light"] .top > .filters > .folder-lock,
-html[data-theme="light"] .top > .filters > #layoutToggle{
+html[data-theme="light"] .top > .filters > #layoutToggle,
+html[data-theme="light"] .top > .filters > #viewBack{
   color:var(--text)!important;
   background:var(--control)!important;
 }
@@ -723,16 +717,9 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     max-width:100%;
     justify-content:flex-end;
   }
-  .top > .filters > #query{
-    flex:1 1 200px;
-    width:auto;
-    max-width:260px;
-    margin-right:auto;
-  }
 }
 @media(max-width:990px){
   .top > .filters{flex-wrap:wrap;justify-content:flex-start;}
-  .top > .filters > #query{flex:1 1 180px;min-width:150px;max-width:none;margin-right:0;}
   .top > .filters > #folder{flex:1 1 180px;width:auto;max-width:none;}
   .top > .filters > #kind{flex:1 1 184px;min-width:184px;max-width:none;width:auto;}
   .top > .filters > #layoutToggle{flex:0 0 auto;}
@@ -748,46 +735,12 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
   .top-left h1{font-size:17px;}
 
   .top-right{justify-content:flex-start;gap:6px;}
-  .top > .filters > #query{flex:1 1 100%;max-width:none;}
 }
 
 
-/* v7.9: one total-file count plus a wider filename/path/tag search.
-   Keep responsive wrapping inside the same sticky header. */
-.top > .filters > #query{
-  flex:1 1 390px;
-  width:clamp(270px,26vw,440px);
-  min-width:220px;
-  max-width:440px;
-}
-@media (max-width:1750px){
-  .top > .filters > #query{
-    flex:1 1 440px;
-    width:auto;
-    min-width:240px;
-    max-width:540px;
-    margin-right:auto;
-  }
-}
-@media (max-width:990px){
-  .top > .filters > #query{
-    flex:1 1 250px;
-    min-width:180px;
-    max-width:none;
-    margin-right:0;
-  }
-}
-@media (max-width:680px){
-  .top > .filters > #query{
-    flex:1 1 100%;
-    width:100%;
-    min-width:0;
-    max-width:none;
-  }
-}
+/* Search and Back controls are defined together below. */
 
-/* v7.9.1: one-row desktop header, prioritizing complete counts and actions.
-   Search occupies ALL available space; it never forces Theme onto another line. */
+/* v7.9.1: one-row desktop header, prioritizing complete counts and actions. */
 @media (min-width:1800px){
   .top{
     display:grid;
@@ -825,13 +778,6 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     gap:6px;
     justify-content:flex-start;
     flex-wrap:nowrap;
-  }
-  .top > .filters > #query{
-    flex:1 1 0%;
-    width:auto;
-    min-width:105px;
-    max-width:none;
-    margin:0;
   }
   .top > .filters > #folder{
     flex:0 0 160px;
@@ -931,6 +877,20 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
 /* v7.9.4: one compact permission-retry button only while a saved library is pending. */
 .top-right #reconnectLibrary{flex:0 0 30px;min-width:30px;max-width:30px;height:38px;padding:5px 0;font-size:17px;line-height:1}
 .top-right #reconnectLibrary[hidden]{display:none!important}
+/* Compact right-aligned search and navigation history. */
+.top > .filters > #viewBack{
+  flex:0 0 auto;white-space:nowrap;padding-inline:9px!important;
+}
+.top > .filters > #query{
+  flex:0 1 220px;width:220px;min-width:105px;max-width:220px;
+  margin-left:auto;margin-right:0;padding-inline:10px!important;
+}
+@media(min-width:1800px){
+  .top > .filters{flex-wrap:wrap;justify-content:flex-end}
+}
+@media(max-width:680px){
+  .top > .filters > #query{width:min(220px,100%);max-width:220px;min-width:0}
+}
 </style>
 </head>
 <body>
@@ -939,14 +899,15 @@ html[data-theme="light"] .top > .filters > input::placeholder{color:var(--muted)
     <h1>▦ freedom_gallery</h1><span id="results" class="results-header" aria-live="polite">Choose a media library folder.</span><span class="small" id="libraryName" hidden aria-hidden="true">No library selected</span>
   </div>
   <div class="filters">
-    <input id="query" type="search" placeholder="Search… (/)" title="Search filename, path or tag; press / to focus" aria-label="Search media">
     <select id="folder" aria-label="Filter by folder"><option value="">All folders</option></select>
     <label class="folder-lock" id="folderLockLabel" title="Lock folder: keep the selected folder while browsing albums and tags. In OR mode, folder is temporarily ignored but remembered.">
       <input id="folderLock" type="checkbox" checked aria-label="Lock selected folder" />
       <span class="folder-lock-icons" aria-hidden="true"><span id="folderLockIcon">🔒</span><span>📁</span></span>
     </label>
     <select id="kind" aria-label="Media type"><option value="">Photos & videos</option><option value="image">Photos only</option><option value="video">Videos only</option></select>
+    <button class="btn" id="viewBack" type="button" disabled title="Return to the previous filter results" aria-label="Back to previous results">← Back</button>
     <button class="btn layout-toggle" id="layoutToggle" type="button" aria-pressed="false" title="Switch between classic cards and a compact, edge-to-edge square media grid. Your choice is saved for this gallery.">▦ Instagram mode</button>
+    <input id="query" type="search" placeholder="Search… (/)" title="Search filename, path or tag; press / to focus" aria-label="Search media">
   </div>
   <div class="top-right">
     <span id="status" class="small">Ready</span>
@@ -1194,7 +1155,7 @@ function chooseCollection(type,name){
   const wasSelected=target.has(key);
   if(collectionOperator==='OFF'){selectedAlbumNames.clear();selectedTagKeys.clear();selectedSpecialViews.clear();if(!wasSelected)target.add(key)}
   else if(wasSelected)target.delete(key);else target.add(key);
-  setCollectionView();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender();
+  setCollectionView();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender('filter');
 }
 function chooseSpecialView(type){
   if(!['favorites','trash'].includes(type))return;
@@ -1203,7 +1164,7 @@ function chooseSpecialView(type){
     selectedAlbumNames.clear();selectedTagKeys.clear();selectedSpecialViews.clear();
     if(!wasSelected)selectedSpecialViews.add(type);
   }else if(wasSelected)selectedSpecialViews.delete(type);else selectedSpecialViews.add(type);
-  setCollectionView();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender();
+  setCollectionView();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender('filter');
 }
 
 function visibleAlbumCount(paths){let count=0;for(const p of paths)if(byPath.has(p)&&!trash.has(p))count++;return count}
@@ -1217,6 +1178,76 @@ function syncFilterControls(){
   button.setAttribute('aria-label','Album and tag combination: '+collectionOperator);
 }
 
+
+// Navigation history is session-only and independent of metadata Undo (Ctrl+Z).
+const VIEW_HISTORY_LIMIT=50;
+let viewHistory=[],renderedView=null,lastViewNavigation='',lastSearchNavigation=0,searchNavigationTimer=null;
+function captureViewState(){
+  return {
+    query:el('query').value,folder:el('folder').value,kind:el('kind').value,
+    albums:[...selectedAlbumNames].sort(),tags:[...selectedTagKeys].sort(),
+    specials:[...selectedSpecialViews].sort(),operator:collectionOperator,locked:folderLocked
+  };
+}
+function sameView(a,b){return !!a&&!!b&&JSON.stringify(a)===JSON.stringify(b)}
+function syncViewBack(){
+  const pendingSearch=renderedView&&el('query').value!==renderedView.query;
+  el('viewBack').disabled=!root||librarySwitching||(!viewHistory.length&&!pendingSearch);
+}
+function resetViewHistory(){
+  clearTimeout(searchNavigationTimer);searchNavigationTimer=null;
+  viewHistory=[];renderedView=null;lastViewNavigation='';lastSearchNavigation=0;
+  syncViewBack();
+}
+function recordRenderedView(navigation=''){
+  const next=captureViewState();
+  if(root&&!librarySwitching&&navigation&&renderedView&&!sameView(renderedView,next)){
+    const now=Date.now();
+    const coalesce=navigation==='search'&&lastViewNavigation==='search'&&now-lastSearchNavigation<800&&viewHistory.length>0;
+    if(!coalesce){
+      viewHistory.push(renderedView);
+      if(viewHistory.length>VIEW_HISTORY_LIMIT)viewHistory.shift();
+    }else if(sameView(viewHistory.at(-1),next)){
+      // Typing and then clearing back to the original search is a no-op.
+      viewHistory.pop();
+    }
+    lastViewNavigation=navigation;lastSearchNavigation=now;
+  }
+  if(navigation&&navigation!=='search')lastViewNavigation=navigation;
+  renderedView=next;syncViewBack();
+}
+function applySearchNavigation(){
+  clearTimeout(searchNavigationTimer);searchNavigationTimer=null;
+  clearSelection();visibleCount=80;filterAndRender('search');
+}
+function scheduleSearchNavigation(){
+  clearTimeout(searchNavigationTimer);
+  searchNavigationTimer=setTimeout(applySearchNavigation,150);
+  syncViewBack();
+}
+function goBackView(){
+  if(!root||librarySwitching)return;
+  // A click before the debounce expires should still undo the pending search.
+  if(searchNavigationTimer!==null)applySearchNavigation();
+  const previous=viewHistory.pop();
+  if(!previous){syncViewBack();return;}
+  lastViewNavigation='';lastSearchNavigation=0;
+  collectionOperator=previous.operator;folderLocked=previous.locked;
+  selectedAlbumNames=new Set(previous.albums.filter(name=>albums.has(name)));
+  const availableTags=new Set(knownTags().map(tag=>tag.key));
+  selectedTagKeys=new Set(previous.tags.filter(key=>availableTags.has(key)));
+  selectedSpecialViews=new Set(previous.specials);
+  setCollectionView();
+  el('query').value=previous.query;el('kind').value=previous.kind;
+  el('folder').value=previous.folder;
+  if(el('folder').selectedIndex<0)el('folder').value='';
+  try{
+    localStorage.setItem(FOLDER_LOCK_KEY,String(folderLocked));
+    localStorage.setItem(COLLECTION_OPERATOR_KEY,collectionOperator);
+  }catch(_){}
+  syncFilterControls();clearSelection();visibleCount=80;
+  renderAlbumList();renderTagList();filterAndRender();
+}
 
 function typeOf(path){return IMAGE_EXT.test(path)?'image':VIDEO_EXT.test(path)?'video':null}
 function setStatus(s){el('status').textContent=s}
@@ -1786,6 +1817,7 @@ async function activateLibrary(picked){
   try{
   await flushThumbManifest();await saveQueue.catch(()=>{});
   scanNo++;clearTimeout(fileInfoTimer);if(el('viewer').open)closeViewer();clearThumbs();
+  resetViewHistory();
   clearSelection();lastUndo=null;root=picked;selectedLibraryId=null;pendingLibraryId=null;
   rememberLibraryName(picked.name);
   configuredRootPath='';dirCache=new Map([['',picked]]);images=[];byPath.clear();
@@ -2003,7 +2035,7 @@ async function removeCollection(){
 }
 
 function renderAlbumSelector(){const s=el('albumSelect'),old=s.value;s.replaceChildren(new Option('Choose album',''));for(const name of [...albums.keys()].sort((a,b)=>a.localeCompare(b,'cs')))s.add(new Option(name,name));if(albums.has(old))s.value=old;updateAlbumButton()}
-function filterAndRender(){
+function filterAndRender(navigation=''){
   const q=el('query').value.trim().toLocaleLowerCase('cs'),folder=el('folder').value,kind=el('kind').value;
   const albumSets=[...selectedAlbumNames].filter(name=>albums.has(name)).map(name=>albums.get(name));
   const tagKeys=[...selectedTagKeys],specials=[...selectedSpecialViews];
@@ -2029,7 +2061,7 @@ function filterAndRender(){
     if(q&&!path.toLocaleLowerCase('cs').includes(q)&&!(tags.get(path)||[]).some(t=>t.toLocaleLowerCase('cs').includes(q)))return false;
     return true;
   });
-  navButtonActive();renderCards();
+  navButtonActive();renderCards();recordRenderedView(navigation);
 }
 function renderCards(){
   if(observer)observer.disconnect();const host=el('gallery');host.replaceChildren();
@@ -2393,7 +2425,7 @@ function showInFolder(){
   const folder=currentPath.split('/').slice(0,-1).join('/');
   closeViewer();clearSelection();resetCollections();visibleCount=80;
   el('query').value='';el('kind').value='';el('folder').value=folder;
-  filterAndRender();el('gallery').scrollIntoView({block:'start',behavior:'smooth'});
+  filterAndRender('filter');el('gallery').scrollIntoView({block:'start',behavior:'smooth'});
   toast(folder?'Showing media in '+folder:'Showing the root folder');
 }
 // The web File System Access API never reveals the real absolute OS path.
@@ -2692,7 +2724,7 @@ async function deleteTrashPaths(onlySelected){
 
 function moveViewer(step){const i=filtered.findIndex(x=>x.path===currentPath);if(i>=0&&filtered.length)openViewer(filtered[(i+step+filtered.length)%filtered.length].path)}
 function editTags(){if(!currentPath)return;const arr=[...new Set(el('tagInput').value.split(',').map(cleanTag).filter(Boolean))];if(arr.some(t=>!validNewTag(t))){toast('Every tag must contain 1–80 characters.');return}recordUndo('edit tags');if(arr.length){tags.set(currentPath,arr);captureSignature(currentPath)}else tags.delete(currentPath);el('tagInput').value=arr.join(', ');saveTags();renderTagList();if(el('query').value||activeView.type==='tags')filterAndRender();toast('Tags queued for saving.')}
-function changeView(type){if(type==='favorites'||type==='trash'){chooseSpecialView(type);return;}clearSelection();resetCollections();visibleCount=80;renderAlbumList();renderTagList();filterAndRender()}
+function changeView(type){if(type==='favorites'||type==='trash'){chooseSpecialView(type);return;}clearSelection();resetCollections();visibleCount=80;renderAlbumList();renderTagList();filterAndRender('filter')}
 function debounce(fn,ms){let timer;return(...a)=>{clearTimeout(timer);timer=setTimeout(()=>fn(...a),ms)}}
 // Browser-native hover tooltips are intentionally concise, with accessibility labels.
 function galleryCollectionDialog({title,message='',input=false,value='',action='Confirm',danger=false,maxLength=80,inputLabel='Collection name',readOnly=false,notice=false}={}){
@@ -3248,17 +3280,18 @@ el('collectionOperator').onclick=()=>{
   }
   setCollectionView();
   try{localStorage.setItem(COLLECTION_OPERATOR_KEY,collectionOperator)}catch(_){}
-  syncFilterControls();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender();
+  syncFilterControls();clearSelection();visibleCount=80;renderAlbumList();renderTagList();filterAndRender('filter');
 };
 el('folderLock').onchange=e=>{
   folderLocked=e.target.checked;
   try{localStorage.setItem(FOLDER_LOCK_KEY,String(folderLocked))}catch(_){}
-  syncFilterControls();clearSelection();visibleCount=80;filterAndRender();
+  syncFilterControls();clearSelection();visibleCount=80;filterAndRender('filter');
 };
 el('collectionQuery').addEventListener('input',debounce(()=>{if(collectionMode==='albums')renderAlbumList();else renderTagList()},90));
 el('newCollection').onclick=()=>void addCollection(); el('removeCollection').onclick=()=>void removeCollection();
-el('query').addEventListener('input',debounce(()=>{clearSelection(); visibleCount=80; filterAndRender()},150));
-el('folder').onchange=el('kind').onchange=()=>{clearSelection(); visibleCount=80; filterAndRender()};
+el('query').addEventListener('input',scheduleSearchNavigation);
+el('folder').onchange=el('kind').onchange=()=>{clearSelection(); visibleCount=80; filterAndRender('filter')};
+el('viewBack').onclick=goBackView;
 el('folder').addEventListener('wheel',event=>{
   const select=el('folder');if(!root||select.disabled||select.options.length<2)return;
   event.preventDefault();

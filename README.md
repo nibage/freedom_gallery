@@ -101,6 +101,7 @@ If browser storage cannot retain the native folder handle, the gallery shows **`
 | **All folders / Fix folder** | Browse one folder and its descendants; lock the folder scope while selecting collections. |
 | **Photos & videos** | Show all supported media, only photos, or only videos. |
 | **Select library… / ↻** | The last library is selected on startup when it opens successfully; otherwise choose a remembered library or click ↻ to request access. |
+| **← Back** | Return to the previous search, folder, media type, album/tag or combined filter results. History is session-only (up to 50 steps), resets when opening a different library, and never undoes file or metadata edits. |
 | **Classic / Instagram mode** | Switch between labeled thumbnails and a compact, gapless square grid. |
 | **Albums / Tags · OFF** | Select one album *or* one tag. |
 | **Albums / Tags · OR** | Show media matching **any** selected album, tag, Favorites, or Trash category. |
