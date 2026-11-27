@@ -2402,14 +2402,21 @@ function runThumbWorkers(){while(thumbWorkers<2&&thumbJobs.length){const job=thu
   })
 }}
 function toggleFavorite(path){if(!root)return;recordUndo('favorite');if(favorites.has(path))favorites.delete(path);else{favorites.add(path);captureSignature(path)}saveFavorites();updateViewerFavorite();navButtonActive()}
-async function newAlbum(){
+async function newAlbum(paths=selectedPaths){
   if(!root)return null;
-  const answer=await galleryCollectionDialog({title:'New album',message:'Choose a name for the virtual album. Original media files are not copied.',input:true,action:'Create album'});
-  if(answer===null)return null;
+  const creationRoot=root;
+  // Capture the selection when the dialog opens; never copy source media.
+  const selected=[...new Set(paths)].filter(path=>byPath.has(path)&&!trash.has(path));
+  const answer=await galleryCollectionDialog({title:'New album',message:'Choose a name for the virtual album. Original media files are not copied.'+(selected.length?' '+selected.length+' selected files will be added automatically.':' The new album will be empty.'),input:true,action:'Create album'});
+  if(answer===null||root!==creationRoot)return null;
   const name=answer.trim();
   if(!validAlbum(name)){toast('Invalid album name (max. 80 characters; no / \ : * ? " < > |).');return null}
   if(albums.has(name)){toast('Album already exists.');return name}
-  recordUndo('create album');albums.set(name,new Set());renderAlbumList();await saveAlbum(name);return name;
+  const members=new Set(selected.filter(path=>byPath.has(path)&&!trash.has(path)));
+  recordUndo('create album');
+  albums.set(name,members);
+  for(const path of members)captureSignature(path);
+  renderAlbumList();await saveAlbum(name);return name;
 }
 
 function toggleAlbumMembership(){if(!currentPath)return;const name=el('albumSelect').value;if(!albums.has(name)){toast('Choose an album first.');return}recordUndo('album membership');const xs=albums.get(name);if(xs.has(currentPath))xs.delete(currentPath);else{xs.add(currentPath);captureSignature(currentPath)}saveAlbum(name);renderAlbumList();el('albumSelect').value=name;updateMembership();if(activeView.type==='album')filterAndRender()}
@@ -2936,7 +2943,7 @@ function switchCollections(mode){ collectionMode=mode==='tags'?'tags':'albums'; 
 async function addCollection(){
   if(!root)return;
   if(collectionMode==='albums'){await newAlbum();return}
-  const answer=await galleryCollectionDialog({title:'New tag',message:'Create a reusable tag name. You can assign it to photos later.',input:true,action:'Create tag'});
+  const answer=await galleryCollectionDialog({title:'New tag',message:'Create a reusable tag name.'+(selectedPaths.size?' Selected files will be tagged automatically.':' You can assign it later.'),input:true,action:'Create tag'});
   if(answer===null)return;
   const name=cleanTag(answer);
   if(!validNewTag(name)){toast('Tag name must contain 1–80 characters.');return}
@@ -3067,7 +3074,7 @@ function renderViewerCollections(){
 }
 async function viewerNewCollection(){
   if(viewerCollectionMode==='albums'){
-    const n=await newAlbum();if(n){viewerCollectionSelection=n;renderViewerCollections()}return;
+    const n=await newAlbum(currentPath?[currentPath]:[]);if(n){viewerCollectionSelection=n;renderViewerCollections()}return;
   }
   const answer=await galleryCollectionDialog({title:'New tag',message:'Create a tag and assign it to this file.',input:true,action:'Create tag'});
   if(answer===null)return;

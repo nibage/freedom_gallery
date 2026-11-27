@@ -116,6 +116,9 @@ The visible results count remains useful when filters are active. The status bes
 
 ## Selection, viewer and keyboard controls
 
+Creating a new album or tag in the sidebar automatically assigns all currently selected photos/videos. With no selection, it is created empty. Creating one in the viewer assigns only the open item. Original files are not copied; Ctrl+Z can undo creation and membership together.
+
+
 - **Classic:** click a thumbnail to view; click its filename to select. **Instagram:** Ctrl/Cmd-click or drag-select; Shift-click selects a range.
 - Right-click a selected group to reveal sidebar **+ / −** actions. Click **+** to add to Favorites/album/tag or **−** to remove existing membership.
 - In the large photo viewer, **only the green + / − button** changes an album/tag assignment; clicking its name only selects the collection for management.
