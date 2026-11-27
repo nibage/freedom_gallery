@@ -18,7 +18,7 @@ test('concise header counts and status contain no duplicate total',()=>{
 
 test('search is compact and right-aligned while remaining responsive',()=>{
   assert.match(html,/\.top > \.filters > #query\{[\s\S]*?max-width:220px;[\s\S]*?margin-left:auto;/);
-  assert.match(html,/@media \(max-width:680px\)/);
+  assert.match(html,/@media\s*\(max-width:680px\)/);
   assert.equal((html.match(/class="filters"/g)||[]).length,1);
 });
 
