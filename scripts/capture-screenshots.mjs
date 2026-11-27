@@ -126,14 +126,34 @@ try {
   }
   console.log('PASS: no-op lock/operator toggles keep card nodes, loaded blobs and grid width');
 
+  // Give even the small demo a scrollable background for the real wheel regression.
+  const backgroundScrollStart=await page.evaluate(()=>{
+    const before=window.scrollY,spacer=document.createElement('div');
+    spacer.id='modal-scroll-test-spacer';spacer.style.height='160vh';document.body.append(spacer);return before;
+  });
   await page.locator('#gallery .photo > img.thumb').first().click();
   await page.waitForFunction(()=>!document.getElementById('bigImage').hidden&&document.getElementById('bigImage').naturalWidth>0);
+  const lockedScroll=await page.evaluate(()=>({y:window.scrollY,width:document.documentElement.clientWidth,overflow:getComputedStyle(document.documentElement).overflowY}));
+  if(lockedScroll.overflow!=='hidden')throw Error('Modal did not lock the document');
+  await page.mouse.move(2,2);await page.mouse.wheel(0,600);
+  await page.waitForTimeout(150);
+  if(await page.evaluate(()=>window.scrollY)!==lockedScroll.y)throw Error('Background moved while viewer was open');
+
   await page.locator('#viewerStage').click({position:{x:4,y:4}});
   if(!await page.locator('#viewer').isVisible())throw Error('Clicking the stage closed the photo');
   await page.locator('#bigImage').hover();await page.mouse.wheel(0,-400);
   await page.waitForFunction(()=>viewerZoom.scale>1);
   await page.mouse.wheel(0,1200);await page.waitForFunction(()=>viewerZoom.scale===1);
   await page.locator('#closeViewer').click();
+  const unlockedScroll=await page.evaluate(()=>({y:window.scrollY,width:document.documentElement.clientWidth,overflow:getComputedStyle(document.documentElement).overflowY}));
+  if(unlockedScroll.overflow==='hidden')throw Error('Closing modal did not restore scrolling');
+  if(unlockedScroll.width!==lockedScroll.width)throw Error('Modal changed scrollbar gutter width');
+  await page.mouse.move((page.viewportSize()?.width||1000)-30,(page.viewportSize()?.height||700)-100);
+  await page.mouse.wheel(0,400);
+  await page.waitForFunction(y=>window.scrollY>y,unlockedScroll.y);
+  await page.evaluate(y=>{document.getElementById('modal-scroll-test-spacer').remove();window.scrollTo(0,y)},backgroundScrollStart);
+  console.log('PASS: modal prevents background wheel scrolling and restores scrolling when closed');
+
   console.log('PASS: viewer stage stays open and wheel zoom returns to fit');
 
   await page.waitForTimeout(900);

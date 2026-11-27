@@ -919,6 +919,12 @@ html{scrollbar-gutter:stable}
 #viewer .stage #bigImage[data-zoomed="true"]{cursor:grab}
 #viewer .stage #bigImage[data-panning="true"]{cursor:grabbing}
 #viewer .stage button{z-index:3}
+/* Modal dialogs are inert to pointer interaction outside, but browsers can still scroll
+   the document underneath. Lock the root while any modal is open, including nested dialogs.
+   Keep the permanent scrollbar gutter and leave dialog-local scrolling and photo zoom intact. */
+html:has(dialog:modal){overflow:hidden;overscroll-behavior:none}
+dialog:modal{overscroll-behavior:contain}
+dialog:modal .collection-scroll,dialog:modal .dialog-body,dialog:modal .move-list,dialog:modal .queue-list,dialog:modal .queue-body,dialog:modal .details{overscroll-behavior:contain}
 </style>
 </head>
 <body>
